@@ -210,14 +210,23 @@ namespace HCommUnit
                     case CommType.None:
                         break;
                     case CommType.Serial:
+                        // check selected item
+                        if (cbPort.SelectedIndex < 0)
+                            return;
+                        // target / option
                         target = cbPort.SelectedItem.ToString();
                         option = Convert.ToInt32(cbBaudrate.SelectedItem.ToString());
                         break;
                     case CommType.Ethernet:
+                        // target / option
                         target = tbIp.Text;
                         option = Convert.ToInt32(nmPort.Value);
                         break;
                     case CommType.Usb:
+                        // check selected item
+                        if (cbDevice.SelectedIndex < 0)
+                            return;
+                        // target / option
                         target = cbDevice.SelectedItem.ToString();
                         option = 0;
                         break;
