@@ -3,11 +3,16 @@
 namespace HComm.Common
 {
     /// <summary>
-    /// HCommInterface serial acknowledge delegate
+    /// HCommInterface acknowledge delegate
     /// </summary>
     /// <param name="cmd">command</param>
     /// <param name="packet">packet</param>
     public delegate void AckData(Command cmd, byte[] packet);
+    /// <summary>
+    /// HCommInterface raw acknowledge delegate
+    /// </summary>
+    /// <param name="packet"></param>
+    public delegate void AckRawData(byte[] packet);
     public interface IHComm
     {
         /// <summary>
@@ -15,9 +20,13 @@ namespace HComm.Common
         /// </summary>
         bool IsConnected { get; }
         /// <summary>
-        /// HCommInterface serial acknowledge event
+        /// HCommInterface acknowledge event
         /// </summary>
         AckData AckReceived { set; }
+        /// <summary>
+        /// HCommInterface raw acknowledge event
+        /// </summary>
+        AckRawData AckRawReceived { set; }
         /// <summary>
         /// HCommInterface connect
         /// </summary>

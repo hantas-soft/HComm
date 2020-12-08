@@ -22,7 +22,7 @@ namespace HComm
         /// <summary>
         /// HComm communicator type
         /// </summary>
-        public CommType Type { get; set; } = CommType.None;
+        public CommType Type { get; private set; } = CommType.None;
         /// <summary>
         /// HComm data received delegate
         /// </summary>
@@ -31,9 +31,18 @@ namespace HComm
         /// <param name="values">values</param>
         public delegate void ReceivedData(Command cmd, int addr, int[] values);
         /// <summary>
+        /// HComm raw data received delegate
+        /// </summary>
+        /// <param name="packet">packet</param>
+        public delegate void ReceivedRawData(byte[] packet);
+        /// <summary>
         /// HComm data received event
         /// </summary>
         public ReceivedData ReceivedMsg { get; set; }
+        /// <summary>
+        /// HComm raw data received event
+        /// </summary>
+        public ReceivedRawData ReceivedRawMsg { get; set; }
         /// <summary>
         /// HComm interface constructor
         /// </summary>
@@ -99,6 +108,7 @@ namespace HComm
                 return false;
             // set event
             Comm.AckReceived = AckReceivedCallback;
+            Comm.AckRawReceived = AckRawReceived;
             // start process timer
             MsgTimer.Change(ProcessTime, ProcessTime);
             // result
@@ -508,6 +518,11 @@ namespace HComm
                 // clear first queue
                 MsgQueue.RemoveAt(0);
             }
+        }
+        private void AckRawReceived(byte[] packet)
+        {
+            // update event
+            ReceivedRawMsg?.Invoke(packet);
         }
     }
 }

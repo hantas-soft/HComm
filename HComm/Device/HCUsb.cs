@@ -24,9 +24,13 @@ namespace HComm.Device
         /// </summary>
         public bool IsConnected => UsbDevice?.IsDeviceConnected ?? false;
         /// <summary>
-        /// HComm received data event
+        /// HComm usb received data event
         /// </summary>
         public AckData AckReceived { get; set; }
+        /// <summary>
+        /// HCommInterface usb raw acknowledge event
+        /// </summary>
+        public AckRawData AckRawReceived { get; set; }
 
         /// <summary>
         /// HComm usb connect
@@ -238,8 +242,12 @@ namespace HComm.Device
         {
             // lock receive buffer
             lock (ReceiveBuf)
+            {
                 // add receive data
                 ReceiveBuf.AddRange(data);
+                // update raw event
+                AckRawReceived?.Invoke(data);
+            }
         }
         private void ProcessTimerCallback(object state)
         {

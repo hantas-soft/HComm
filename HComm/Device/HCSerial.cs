@@ -27,6 +27,10 @@ namespace HComm.Device
         /// HCommInterface serial acknowledge event
         /// </summary>
         public AckData AckReceived { get; set; }
+        /// <summary>
+        /// HCommInterface serial raw acknowledge event
+        /// </summary>
+        public AckRawData AckRawReceived { get; set; }
 
         /// <summary>
         /// HCommInterface serial connect
@@ -253,8 +257,14 @@ namespace HComm.Device
         {
             // lock receive buffer
             lock (ReceiveBuf)
+            {
+                // get data
+                var data = Port.Encoding.GetBytes(Port.ReadExisting());
                 // add receive data
-                ReceiveBuf.AddRange(Port.Encoding.GetBytes(Port.ReadExisting()));
+                ReceiveBuf.AddRange(data);
+                // update raw event
+                AckRawReceived?.Invoke(data);
+            }
         }
         private void ProcessTimerCallback(object state)
         {

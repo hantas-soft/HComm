@@ -43,12 +43,14 @@ namespace HCommUnit
             System.Windows.Forms.Label lbSampling;
             System.Windows.Forms.Label lbGOption;
             System.Windows.Forms.Label lbLog;
+            System.Windows.Forms.Label lbId;
             this.timer = new System.Windows.Forms.Timer(this.components);
             this.cbType = new System.Windows.Forms.ComboBox();
             this.gbSerial = new System.Windows.Forms.GroupBox();
             this.cbBaudrate = new System.Windows.Forms.ComboBox();
             this.cbPort = new System.Windows.Forms.ComboBox();
             this.gbEthernet = new System.Windows.Forms.GroupBox();
+            this.tbIp = new System.Windows.Forms.TextBox();
             this.nmPort = new System.Windows.Forms.NumericUpDown();
             this.gbUsb = new System.Windows.Forms.GroupBox();
             this.cbDevice = new System.Windows.Forms.ComboBox();
@@ -57,10 +59,11 @@ namespace HCommUnit
             this.slVersion = new System.Windows.Forms.ToolStripStatusLabel();
             this.gbGetSet = new System.Windows.Forms.GroupBox();
             this.btSetParam = new System.Windows.Forms.Button();
-            this.numericUpDown2 = new System.Windows.Forms.NumericUpDown();
-            this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
+            this.nmValue = new System.Windows.Forms.NumericUpDown();
+            this.nmAddr = new System.Windows.Forms.NumericUpDown();
             this.btGetParam = new System.Windows.Forms.Button();
             this.gbRealTime = new System.Windows.Forms.GroupBox();
+            this.btMorStartAd = new System.Windows.Forms.Button();
             this.btMorStop = new System.Windows.Forms.Button();
             this.btMorStart = new System.Windows.Forms.Button();
             this.gbGraph = new System.Windows.Forms.GroupBox();
@@ -74,7 +77,12 @@ namespace HCommUnit
             this.cbCh1 = new System.Windows.Forms.ComboBox();
             this.tbLog = new System.Windows.Forms.TextBox();
             this.btRefresh = new System.Windows.Forms.Button();
-            this.tbIp = new System.Windows.Forms.TextBox();
+            this.nmID = new System.Windows.Forms.NumericUpDown();
+            this.cbHexLog = new System.Windows.Forms.CheckBox();
+            this.gbStatus = new System.Windows.Forms.GroupBox();
+            this.btGetInfo = new System.Windows.Forms.Button();
+            this.btGetStatus = new System.Windows.Forms.Button();
+            this.btClear = new System.Windows.Forms.Button();
             lbType = new System.Windows.Forms.Label();
             lbPort = new System.Windows.Forms.Label();
             lbBaudrate = new System.Windows.Forms.Label();
@@ -88,16 +96,19 @@ namespace HCommUnit
             lbSampling = new System.Windows.Forms.Label();
             lbGOption = new System.Windows.Forms.Label();
             lbLog = new System.Windows.Forms.Label();
+            lbId = new System.Windows.Forms.Label();
             this.gbSerial.SuspendLayout();
             this.gbEthernet.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nmPort)).BeginInit();
             this.gbUsb.SuspendLayout();
             this.ssInfo.SuspendLayout();
             this.gbGetSet.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown2)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmValue)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmAddr)).BeginInit();
             this.gbRealTime.SuspendLayout();
             this.gbGraph.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nmID)).BeginInit();
+            this.gbStatus.SuspendLayout();
             this.SuspendLayout();
             // 
             // lbType
@@ -184,7 +195,7 @@ namespace HCommUnit
             // lbCh2
             // 
             lbCh2.AutoSize = true;
-            lbCh2.Location = new System.Drawing.Point(6, 52);
+            lbCh2.Location = new System.Drawing.Point(6, 54);
             lbCh2.Name = "lbCh2";
             lbCh2.Size = new System.Drawing.Size(62, 12);
             lbCh2.TabIndex = 8;
@@ -193,7 +204,7 @@ namespace HCommUnit
             // lbSampling
             // 
             lbSampling.AutoSize = true;
-            lbSampling.Location = new System.Drawing.Point(6, 104);
+            lbSampling.Location = new System.Drawing.Point(6, 106);
             lbSampling.Name = "lbSampling";
             lbSampling.Size = new System.Drawing.Size(58, 12);
             lbSampling.TabIndex = 11;
@@ -202,7 +213,7 @@ namespace HCommUnit
             // lbGOption
             // 
             lbGOption.AutoSize = true;
-            lbGOption.Location = new System.Drawing.Point(6, 78);
+            lbGOption.Location = new System.Drawing.Point(6, 80);
             lbGOption.Name = "lbGOption";
             lbGOption.Size = new System.Drawing.Size(41, 12);
             lbGOption.TabIndex = 13;
@@ -217,12 +228,23 @@ namespace HCommUnit
             lbLog.TabIndex = 11;
             lbLog.Text = "Log";
             // 
+            // lbId
+            // 
+            lbId.AutoSize = true;
+            lbId.Location = new System.Drawing.Point(141, 9);
+            lbId.Name = "lbId";
+            lbId.Size = new System.Drawing.Size(16, 12);
+            lbId.TabIndex = 14;
+            lbId.Text = "ID";
+            // 
             // timer
             // 
-            this.timer.Interval = 10;
+            this.timer.Interval = 50;
+            this.timer.Tick += new System.EventHandler(this.timer_Tick);
             // 
             // cbType
             // 
+            this.cbType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbType.FormattingEnabled = true;
             this.cbType.Items.AddRange(new object[] {
             "Serial",
@@ -232,7 +254,6 @@ namespace HCommUnit
             this.cbType.Name = "cbType";
             this.cbType.Size = new System.Drawing.Size(121, 20);
             this.cbType.TabIndex = 0;
-            this.cbType.Text = "Serial";
             // 
             // gbSerial
             // 
@@ -284,6 +305,14 @@ namespace HCommUnit
             this.gbEthernet.TabStop = false;
             this.gbEthernet.Text = "Ethernet";
             // 
+            // tbIp
+            // 
+            this.tbIp.Location = new System.Drawing.Point(39, 16);
+            this.tbIp.Name = "tbIp";
+            this.tbIp.Size = new System.Drawing.Size(125, 21);
+            this.tbIp.TabIndex = 8;
+            this.tbIp.Text = "192.168.0.100";
+            // 
             // nmPort
             // 
             this.nmPort.Location = new System.Drawing.Point(39, 43);
@@ -328,12 +357,13 @@ namespace HCommUnit
             // 
             // btConnect
             // 
-            this.btConnect.Location = new System.Drawing.Point(229, 23);
+            this.btConnect.Location = new System.Drawing.Point(366, 21);
             this.btConnect.Name = "btConnect";
-            this.btConnect.Size = new System.Drawing.Size(307, 23);
+            this.btConnect.Size = new System.Drawing.Size(164, 23);
             this.btConnect.TabIndex = 5;
             this.btConnect.Text = "CONNECT";
             this.btConnect.UseVisualStyleBackColor = true;
+            this.btConnect.Click += new System.EventHandler(this.btConnect_Click);
             // 
             // ssInfo
             // 
@@ -353,10 +383,10 @@ namespace HCommUnit
             // gbGetSet
             // 
             this.gbGetSet.Controls.Add(this.btSetParam);
-            this.gbGetSet.Controls.Add(this.numericUpDown2);
+            this.gbGetSet.Controls.Add(this.nmValue);
             this.gbGetSet.Controls.Add(lbOption);
             this.gbGetSet.Controls.Add(lbAddr);
-            this.gbGetSet.Controls.Add(this.numericUpDown1);
+            this.gbGetSet.Controls.Add(this.nmAddr);
             this.gbGetSet.Controls.Add(this.btGetParam);
             this.gbGetSet.Location = new System.Drawing.Point(14, 134);
             this.gbGetSet.Name = "gbGetSet";
@@ -373,36 +403,37 @@ namespace HCommUnit
             this.btSetParam.TabIndex = 9;
             this.btSetParam.Text = "Set Parameter";
             this.btSetParam.UseVisualStyleBackColor = true;
+            this.btSetParam.Click += new System.EventHandler(this.btActionParam_Click);
             // 
-            // numericUpDown2
+            // nmValue
             // 
-            this.numericUpDown2.Location = new System.Drawing.Point(95, 48);
-            this.numericUpDown2.Maximum = new decimal(new int[] {
+            this.nmValue.Location = new System.Drawing.Point(95, 48);
+            this.nmValue.Maximum = new decimal(new int[] {
             65535,
             0,
             0,
             0});
-            this.numericUpDown2.Name = "numericUpDown2";
-            this.numericUpDown2.Size = new System.Drawing.Size(93, 21);
-            this.numericUpDown2.TabIndex = 8;
+            this.nmValue.Name = "nmValue";
+            this.nmValue.Size = new System.Drawing.Size(93, 21);
+            this.nmValue.TabIndex = 8;
             // 
-            // numericUpDown1
+            // nmAddr
             // 
-            this.numericUpDown1.Location = new System.Drawing.Point(95, 20);
-            this.numericUpDown1.Maximum = new decimal(new int[] {
+            this.nmAddr.Location = new System.Drawing.Point(95, 20);
+            this.nmAddr.Maximum = new decimal(new int[] {
             65535,
             0,
             0,
             0});
-            this.numericUpDown1.Minimum = new decimal(new int[] {
+            this.nmAddr.Minimum = new decimal(new int[] {
             1,
             0,
             0,
             0});
-            this.numericUpDown1.Name = "numericUpDown1";
-            this.numericUpDown1.Size = new System.Drawing.Size(93, 21);
-            this.numericUpDown1.TabIndex = 1;
-            this.numericUpDown1.Value = new decimal(new int[] {
+            this.nmAddr.Name = "nmAddr";
+            this.nmAddr.Size = new System.Drawing.Size(93, 21);
+            this.nmAddr.TabIndex = 1;
+            this.nmAddr.Value = new decimal(new int[] {
             1,
             0,
             0,
@@ -416,35 +447,49 @@ namespace HCommUnit
             this.btGetParam.TabIndex = 0;
             this.btGetParam.Text = "Get Parameter";
             this.btGetParam.UseVisualStyleBackColor = true;
+            this.btGetParam.Click += new System.EventHandler(this.btActionParam_Click);
             // 
             // gbRealTime
             // 
+            this.gbRealTime.Controls.Add(this.btMorStartAd);
             this.gbRealTime.Controls.Add(this.btMorStop);
             this.gbRealTime.Controls.Add(this.btMorStart);
-            this.gbRealTime.Location = new System.Drawing.Point(366, 134);
+            this.gbRealTime.Location = new System.Drawing.Point(366, 222);
             this.gbRealTime.Name = "gbRealTime";
-            this.gbRealTime.Size = new System.Drawing.Size(170, 82);
+            this.gbRealTime.Size = new System.Drawing.Size(170, 135);
             this.gbRealTime.TabIndex = 8;
             this.gbRealTime.TabStop = false;
             this.gbRealTime.Text = "Real-Time monitor";
             // 
+            // btMorStartAd
+            // 
+            this.btMorStartAd.Location = new System.Drawing.Point(28, 51);
+            this.btMorStartAd.Name = "btMorStartAd";
+            this.btMorStartAd.Size = new System.Drawing.Size(115, 23);
+            this.btMorStartAd.TabIndex = 3;
+            this.btMorStartAd.Text = "Start (AD only)";
+            this.btMorStartAd.UseVisualStyleBackColor = true;
+            this.btMorStartAd.Click += new System.EventHandler(this.btActionMor_Click);
+            // 
             // btMorStop
             // 
-            this.btMorStop.Location = new System.Drawing.Point(28, 47);
+            this.btMorStop.Location = new System.Drawing.Point(28, 77);
             this.btMorStop.Name = "btMorStop";
             this.btMorStop.Size = new System.Drawing.Size(115, 23);
             this.btMorStop.TabIndex = 2;
             this.btMorStop.Text = "Stop";
             this.btMorStop.UseVisualStyleBackColor = true;
+            this.btMorStop.Click += new System.EventHandler(this.btActionMor_Click);
             // 
             // btMorStart
             // 
-            this.btMorStart.Location = new System.Drawing.Point(28, 20);
+            this.btMorStart.Location = new System.Drawing.Point(28, 24);
             this.btMorStart.Name = "btMorStart";
             this.btMorStart.Size = new System.Drawing.Size(115, 23);
             this.btMorStart.TabIndex = 1;
             this.btMorStart.Text = "Start";
             this.btMorStart.UseVisualStyleBackColor = true;
+            this.btMorStart.Click += new System.EventHandler(this.btActionMor_Click);
             // 
             // gbGraph
             // 
@@ -462,7 +507,7 @@ namespace HCommUnit
             this.gbGraph.Controls.Add(lbCh1);
             this.gbGraph.Location = new System.Drawing.Point(14, 222);
             this.gbGraph.Name = "gbGraph";
-            this.gbGraph.Size = new System.Drawing.Size(522, 135);
+            this.gbGraph.Size = new System.Drawing.Size(346, 135);
             this.gbGraph.TabIndex = 9;
             this.gbGraph.TabStop = false;
             this.gbGraph.Text = "Graph monitoring";
@@ -471,37 +516,41 @@ namespace HCommUnit
             // 
             this.btGraphSet.Location = new System.Drawing.Point(225, 23);
             this.btGraphSet.Name = "btGraphSet";
-            this.btGraphSet.Size = new System.Drawing.Size(270, 23);
+            this.btGraphSet.Size = new System.Drawing.Size(115, 23);
             this.btGraphSet.TabIndex = 18;
             this.btGraphSet.Text = "Set graph setting";
             this.btGraphSet.UseVisualStyleBackColor = true;
+            this.btGraphSet.Click += new System.EventHandler(this.btGraphSet_Click);
             // 
             // btGraphStop
             // 
-            this.btGraphStop.Location = new System.Drawing.Point(225, 98);
+            this.btGraphStop.Location = new System.Drawing.Point(225, 101);
             this.btGraphStop.Name = "btGraphStop";
-            this.btGraphStop.Size = new System.Drawing.Size(270, 23);
+            this.btGraphStop.Size = new System.Drawing.Size(115, 23);
             this.btGraphStop.TabIndex = 17;
             this.btGraphStop.Text = "Stop";
             this.btGraphStop.UseVisualStyleBackColor = true;
+            this.btGraphStop.Click += new System.EventHandler(this.btActionGraph_Click);
             // 
             // btGraphStartAd
             // 
-            this.btGraphStartAd.Location = new System.Drawing.Point(380, 69);
+            this.btGraphStartAd.Location = new System.Drawing.Point(225, 75);
             this.btGraphStartAd.Name = "btGraphStartAd";
             this.btGraphStartAd.Size = new System.Drawing.Size(115, 23);
             this.btGraphStartAd.TabIndex = 16;
             this.btGraphStartAd.Text = "Start (AD Only)";
             this.btGraphStartAd.UseVisualStyleBackColor = true;
+            this.btGraphStartAd.Click += new System.EventHandler(this.btActionGraph_Click);
             // 
             // btGraphStart
             // 
-            this.btGraphStart.Location = new System.Drawing.Point(225, 69);
+            this.btGraphStart.Location = new System.Drawing.Point(225, 49);
             this.btGraphStart.Name = "btGraphStart";
             this.btGraphStart.Size = new System.Drawing.Size(115, 23);
             this.btGraphStart.TabIndex = 15;
             this.btGraphStart.Text = "Start";
             this.btGraphStart.UseVisualStyleBackColor = true;
+            this.btGraphStart.Click += new System.EventHandler(this.btActionGraph_Click);
             // 
             // cbOption
             // 
@@ -511,7 +560,7 @@ namespace HCommUnit
             "Fastening",
             "Lossening",
             "Both"});
-            this.cbOption.Location = new System.Drawing.Point(95, 75);
+            this.cbOption.Location = new System.Drawing.Point(95, 77);
             this.cbOption.Name = "cbOption";
             this.cbOption.Size = new System.Drawing.Size(93, 20);
             this.cbOption.TabIndex = 14;
@@ -525,7 +574,7 @@ namespace HCommUnit
             "10 ms",
             "15 ms",
             "30 ms"});
-            this.cbSampling.Location = new System.Drawing.Point(95, 101);
+            this.cbSampling.Location = new System.Drawing.Point(95, 104);
             this.cbSampling.Name = "cbSampling";
             this.cbSampling.Size = new System.Drawing.Size(93, 20);
             this.cbSampling.TabIndex = 12;
@@ -544,7 +593,7 @@ namespace HCommUnit
             "Current command",
             "Snug angle",
             "Torque/Angle"});
-            this.cbCh2.Location = new System.Drawing.Point(95, 49);
+            this.cbCh2.Location = new System.Drawing.Point(95, 51);
             this.cbCh2.Name = "cbCh2";
             this.cbCh2.Size = new System.Drawing.Size(93, 20);
             this.cbCh2.TabIndex = 10;
@@ -579,12 +628,13 @@ namespace HCommUnit
             this.tbLog.Multiline = true;
             this.tbLog.Name = "tbLog";
             this.tbLog.ReadOnly = true;
-            this.tbLog.Size = new System.Drawing.Size(230, 333);
+            this.tbLog.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.tbLog.Size = new System.Drawing.Size(230, 304);
             this.tbLog.TabIndex = 10;
             // 
             // btRefresh
             // 
-            this.btRefresh.Location = new System.Drawing.Point(141, 23);
+            this.btRefresh.Location = new System.Drawing.Point(278, 21);
             this.btRefresh.Name = "btRefresh";
             this.btRefresh.Size = new System.Drawing.Size(82, 23);
             this.btRefresh.TabIndex = 12;
@@ -592,19 +642,92 @@ namespace HCommUnit
             this.btRefresh.UseVisualStyleBackColor = true;
             this.btRefresh.Click += new System.EventHandler(this.btRefresh_Click);
             // 
-            // tbIp
+            // nmID
             // 
-            this.tbIp.Location = new System.Drawing.Point(39, 16);
-            this.tbIp.Name = "tbIp";
-            this.tbIp.Size = new System.Drawing.Size(125, 21);
-            this.tbIp.TabIndex = 8;
-            this.tbIp.Text = "192.168.0.100";
+            this.nmID.Location = new System.Drawing.Point(141, 23);
+            this.nmID.Maximum = new decimal(new int[] {
+            15,
+            0,
+            0,
+            0});
+            this.nmID.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.nmID.Name = "nmID";
+            this.nmID.Size = new System.Drawing.Size(120, 21);
+            this.nmID.TabIndex = 13;
+            this.nmID.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            // 
+            // cbHexLog
+            // 
+            this.cbHexLog.AutoSize = true;
+            this.cbHexLog.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cbHexLog.Location = new System.Drawing.Point(694, 8);
+            this.cbHexLog.Name = "cbHexLog";
+            this.cbHexLog.Size = new System.Drawing.Size(78, 16);
+            this.cbHexLog.TabIndex = 15;
+            this.cbHexLog.Text = "RAW data";
+            this.cbHexLog.UseVisualStyleBackColor = true;
+            // 
+            // gbStatus
+            // 
+            this.gbStatus.Controls.Add(this.btGetInfo);
+            this.gbStatus.Controls.Add(this.btGetStatus);
+            this.gbStatus.Location = new System.Drawing.Point(366, 134);
+            this.gbStatus.Name = "gbStatus";
+            this.gbStatus.Size = new System.Drawing.Size(170, 82);
+            this.gbStatus.TabIndex = 16;
+            this.gbStatus.TabStop = false;
+            this.gbStatus.Text = "Status / Information";
+            // 
+            // btGetInfo
+            // 
+            this.btGetInfo.Location = new System.Drawing.Point(28, 48);
+            this.btGetInfo.Name = "btGetInfo";
+            this.btGetInfo.Size = new System.Drawing.Size(115, 23);
+            this.btGetInfo.TabIndex = 2;
+            this.btGetInfo.Text = "Get Info";
+            this.btGetInfo.UseVisualStyleBackColor = true;
+            this.btGetInfo.Click += new System.EventHandler(this.btActionStatus_Click);
+            // 
+            // btGetStatus
+            // 
+            this.btGetStatus.Location = new System.Drawing.Point(28, 20);
+            this.btGetStatus.Name = "btGetStatus";
+            this.btGetStatus.Size = new System.Drawing.Size(115, 23);
+            this.btGetStatus.TabIndex = 1;
+            this.btGetStatus.Text = "Get Status";
+            this.btGetStatus.UseVisualStyleBackColor = true;
+            this.btGetStatus.Click += new System.EventHandler(this.btActionStatus_Click);
+            // 
+            // btClear
+            // 
+            this.btClear.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.btClear.Location = new System.Drawing.Point(542, 334);
+            this.btClear.Name = "btClear";
+            this.btClear.Size = new System.Drawing.Size(230, 23);
+            this.btClear.TabIndex = 17;
+            this.btClear.Text = "Clear";
+            this.btClear.UseVisualStyleBackColor = true;
+            this.btClear.Click += new System.EventHandler(this.btClear_Click);
             // 
             // FormHComm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(784, 386);
+            this.Controls.Add(this.btClear);
+            this.Controls.Add(this.gbStatus);
+            this.Controls.Add(this.cbHexLog);
+            this.Controls.Add(lbId);
+            this.Controls.Add(this.nmID);
             this.Controls.Add(this.btRefresh);
             this.Controls.Add(lbLog);
             this.Controls.Add(this.tbLog);
@@ -632,11 +755,13 @@ namespace HCommUnit
             this.ssInfo.PerformLayout();
             this.gbGetSet.ResumeLayout(false);
             this.gbGetSet.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown2)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmValue)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmAddr)).EndInit();
             this.gbRealTime.ResumeLayout(false);
             this.gbGraph.ResumeLayout(false);
             this.gbGraph.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nmID)).EndInit();
+            this.gbStatus.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -657,8 +782,8 @@ namespace HCommUnit
         private System.Windows.Forms.ToolStripStatusLabel slVersion;
         private System.Windows.Forms.GroupBox gbGetSet;
         private System.Windows.Forms.Button btGetParam;
-        private System.Windows.Forms.NumericUpDown numericUpDown2;
-        private System.Windows.Forms.NumericUpDown numericUpDown1;
+        private System.Windows.Forms.NumericUpDown nmValue;
+        private System.Windows.Forms.NumericUpDown nmAddr;
         private System.Windows.Forms.Button btSetParam;
         private System.Windows.Forms.GroupBox gbRealTime;
         private System.Windows.Forms.Button btMorStop;
@@ -675,6 +800,13 @@ namespace HCommUnit
         private System.Windows.Forms.TextBox tbLog;
         private System.Windows.Forms.Button btRefresh;
         private System.Windows.Forms.TextBox tbIp;
+        private System.Windows.Forms.NumericUpDown nmID;
+        private System.Windows.Forms.CheckBox cbHexLog;
+        private System.Windows.Forms.Button btMorStartAd;
+        private System.Windows.Forms.GroupBox gbStatus;
+        private System.Windows.Forms.Button btGetInfo;
+        private System.Windows.Forms.Button btGetStatus;
+        private System.Windows.Forms.Button btClear;
     }
 }
 

@@ -23,9 +23,13 @@ namespace HComm.Device
         /// </summary>
         public bool IsConnected { get; private set; }
         /// <summary>
-        /// HComm received data event
+        /// HComm ethenrnet received data event
         /// </summary>
         public AckData AckReceived { get; set; }
+        /// <summary>
+        /// HCommInterface ethernet raw acknowledge event
+        /// </summary>
+        public AckRawData AckRawReceived { get; set; }
         /// <summary>
         /// HComm ethernet constructor
         /// </summary>
@@ -290,8 +294,14 @@ namespace HComm.Device
         {
             // lock receive buffer
             lock (ReceiveBuf)
+            {
+                // get data
+                var data = e.Data.Take(e.Length).ToArray();
                 // add receive data
-                ReceiveBuf.AddRange(e.Data.Take(e.Length));
+                ReceiveBuf.AddRange(data);
+                // update raw event
+                AckRawReceived?.Invoke(data);
+            }
         }
         private void ProcessTimerCallback(object state)
         {
