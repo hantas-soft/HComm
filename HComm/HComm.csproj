@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Copyright>Copyright 2020. Hantas all right reserved.</Copyright>
+    <Company>Hantas</Company>
+    <Authors>Eloiz</Authors>
+    <Version>1.00.0</Version>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <Description>Hantas tool device communication library</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SuperSocket.ClientEngine.Core" Version="0.10.0" />
+    <PackageReference Include="System.IO.Ports" Version="5.0.0" />
+    <PackageReference Include="UsbHid" Version="1.2.1" />
+  </ItemGroup>
+
+</Project>
