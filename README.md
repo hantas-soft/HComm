@@ -5,14 +5,17 @@ Hantas tool device communication library
 1. Install using Nuget.(https://www.nuget.org/packages/HComm/)
 
 2. Add 'using' HComm refrence.
+
     using HComm;
     using HComm.Common;
     using HComm.Device;
 
 3. Declare the HCommInterface object like this.
+
     private static HCommInterface hComm = new HCommInterface();
 
 4. Set event and declare event
+
     hComm.ReceiveMsg = ReceivedMessage;
     hComm.ReceiveRawMsg = ReceivedRawMessage;
     ...
@@ -20,20 +23,24 @@ Hantas tool device communication library
     private void ReceivedRawMsg(byte[] packet) { ... }
 
 5. Set the communication type. (One of Serial, Ethernet, Usb)
+
     hComm.Setup(CommType.Serial);       // Serial type
     hComm.Setup(CommType.Ethernet);     // Ethernet type
     hComm.Setup(CommType.Usb);          // Usb type
 
 6. Connect device
+
     hComm.Connect(TARGET, OPTION, ID);
 > TARGET = COM PORT (Serial), IP ADDRESS (Ethernet), DEVICE ID (USB)
 > OPTION = BAUD RATE (Serial), PORT (Ethernet), NOT USE (USB)
 > ID = Identifier (Not input = default 1)
 
 7. If the connection is successful, 'IsConnected' property becomes TRUE.
+
     hComm.IsConnected;      // TRUE
 
 8. Used method
+
     hComm.GetParam(1, 10);          // GET parameter values. Start address = 1, Count = 10
     hComm.SetParam(1, 0);           // SET parameter value. Set address = 1, value = 0
     hComm.GetInfo();                // GET device information
