@@ -8,12 +8,25 @@
     <Version>1.00.0</Version>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <Description>Hantas tool device communication library</Description>
+    <PackageProjectUrl>https://github.com/hantas-soft/HComm.git</PackageProjectUrl>
+    <RepositoryUrl></RepositoryUrl>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageTags>C#, .Net Standard 2.0</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="SuperSocket.ClientEngine.Core" Version="0.10.0" />
     <PackageReference Include="System.IO.Ports" Version="5.0.0" />
     <PackageReference Include="UsbHid" Version="1.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="icon.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
