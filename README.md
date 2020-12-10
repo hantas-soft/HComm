@@ -4,7 +4,7 @@ Hantas tool device communication library
 ## How to use
 1. Install using Nuget.(https://www.nuget.org/packages/HComm/)
 
-2. Add 'using' HComm refrence.
+2. Add 'using' HComm reference.
 <pre><code>
     using HComm;
     using HComm.Common;
