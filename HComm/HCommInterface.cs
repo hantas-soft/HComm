@@ -9,7 +9,6 @@ namespace HComm
     public class HCommInterface
     {
         private const int ProcessTime = 10;
-        private const int MaxQueueSize = 20;
         private const int MaxParamBlock = 30;
         private IHComm Comm { get; set; }
         private Timer MsgTimer { get; }
@@ -23,6 +22,10 @@ namespace HComm
         /// HComm communicator type
         /// </summary>
         public CommType Type { get; private set; } = CommType.None;
+        /// <summary>
+        /// HComm communicator message queue size
+        /// </summary>
+        public int MaxQueueSize { get; set; } = 20;
         /// <summary>
         /// HComm data received delegate
         /// </summary>
