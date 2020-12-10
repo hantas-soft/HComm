@@ -53,8 +53,10 @@ Hantas tool device communication library
 ## History
 v1.0.2
 - Get parameter block sequence
+
 v1.0.1
 - Add example
 - Raw data monitoring
+
 v1.0.0
 - Release Hantas communication library
