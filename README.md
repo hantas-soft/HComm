@@ -51,6 +51,8 @@ Hantas tool device communication library
     hComm.GetGraph(4200, 1);        // GET graph monitoring data
 </code></pre>
 ## History
+v1.0.2
+- Get parameter block sequence
 v1.0.1
 - Add example
 - Raw data monitoring
