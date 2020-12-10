@@ -4,7 +4,7 @@ Hantas tool device communication library
 ## How to use
 1. Install using Nuget.(https://www.nuget.org/packages/HComm/)
 
-2. Add 'using' HComm refrence.
+2. Add 'using' HComm reference.
 <pre><code>
     using HComm;
     using HComm.Common;
@@ -31,10 +31,10 @@ Hantas tool device communication library
 6. Connect device
 <pre><code>
     hComm.Connect(TARGET, OPTION, ID);
+    // TARGET = COM PORT (Serial), IP ADDRESS (Ethernet), DEVICE ID (USB)
+    // OPTION = BAUD RATE (Serial), PORT (Ethernet), NOT USE (USB)
+    // ID = Identifier (Not input = default 1)
 </code></pre>
-> TARGET = COM PORT (Serial), IP ADDRESS (Ethernet), DEVICE ID (USB)
-> OPTION = BAUD RATE (Serial), PORT (Ethernet), NOT USE (USB)
-> ID = Identifier (Not input = default 1)
 
 7. If the connection is successful, 'IsConnected' property becomes TRUE.
 <pre><code>
@@ -51,8 +51,12 @@ Hantas tool device communication library
     hComm.GetGraph(4200, 1);        // GET graph monitoring data
 </code></pre>
 ## History
+v1.0.2
+- Get parameter block sequence
+
 v1.0.1
 - Add example
 - Raw data monitoring
+
 v1.0.0
 - Release Hantas communication library
