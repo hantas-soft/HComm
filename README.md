@@ -32,8 +32,11 @@ Hantas tool device communication library
 <pre><code>
     hComm.Connect(TARGET, OPTION, ID);
 </code></pre>
+
 > TARGET = COM PORT (Serial), IP ADDRESS (Ethernet), DEVICE ID (USB)
+
 > OPTION = BAUD RATE (Serial), PORT (Ethernet), NOT USE (USB)
+
 > ID = Identifier (Not input = default 1)
 
 7. If the connection is successful, 'IsConnected' property becomes TRUE.
