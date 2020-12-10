@@ -149,27 +149,21 @@ namespace HComm
                 // check duplicate message
                 if (MsgQueue.Find(x => x.Address == addr) != null)
                     return false;
-                // check type
-                if (Type == CommType.Usb)
+                
+                // block / remain
+                var block = (ushort) (count / MaxParamBlock);
+                var remain = (ushort) (count % MaxParamBlock);
+                var limit = block + (remain > 0 ? 1 : 0);
+                // check block
+                for (var i = 0; i < limit; i++)
                 {
-                    // block / remain
-                    var block = (ushort) (count / MaxParamBlock);
-                    var remain = (ushort) (count % MaxParamBlock);
-                    var limit = block + (remain > 0 ? 1 : 0);
-                    // check block
-                    for (var i = 0; i < limit; i++)
-                    {
-                        // set address
-                        var start = (ushort) (addr + i * MaxParamBlock);
-                        // check block num
-                        MsgQueue.Add(i == limit - 1 && remain > 0
-                            ? new HCommMsg(start, Comm.PacketGetParam(start, remain))
-                            : new HCommMsg(start, Comm.PacketGetParam(start, MaxParamBlock)));
-                    }
+                    // set address
+                    var start = (ushort) (addr + i * MaxParamBlock);
+                    // check block num
+                    MsgQueue.Add(i == limit - 1 && remain > 0
+                        ? new HCommMsg(start, Comm.PacketGetParam(start, remain))
+                        : new HCommMsg(start, Comm.PacketGetParam(start, MaxParamBlock)));
                 }
-                else
-                    // add queue
-                    MsgQueue.Add(new HCommMsg(addr, Comm.PacketGetParam(addr, count)));
                 // result
                 return true;
             }

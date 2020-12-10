@@ -308,7 +308,7 @@ namespace HCommUnit
             if ((sender == btMorStart || sender == btMorStartAd) && !StateMor)
             {
                 // set monitor type
-                MorType = sender == btGraphStart ? MonitorType.RealTime : MonitorType.RealTimeAd;
+                MorType = sender == btMorStart ? MonitorType.RealTime : MonitorType.RealTimeAd;
                 // set state
                 StateMor = true;
                 // start timer
