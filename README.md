@@ -51,6 +51,10 @@ Hantas tool device communication library
     hComm.GetGraph(4200, 1);        // GET graph monitoring data
 </code></pre>
 ## History
+v1.0.4
+- Waiting message queue count
+- SetParam Immediately inserted
+
 v1.0.3
 - Message process queue size flexiable
 

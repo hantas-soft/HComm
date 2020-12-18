@@ -27,6 +27,10 @@ namespace HComm
         /// </summary>
         public int MaxQueueSize { get; set; } = 20;
         /// <summary>
+        /// HComm communicator waiting queue count
+        /// </summary>
+        public int QueueCount { get { return MsgQueue.Count; } }
+        /// <summary>
         /// HComm data received delegate
         /// </summary>
         /// <param name="cmd">command</param>
@@ -185,8 +189,13 @@ namespace HComm
                 // check max queue size
                 if (MsgQueue.Count >= MaxQueueSize)
                     return false;
-                // add queue
-                MsgQueue.Add(new HCommMsg(addr, Comm.PacketSetParam(addr, value)));
+                // check queue count
+                if (QueueCount > 0)
+                    // inser queue
+                    MsgQueue.Insert(1, new HCommMsg(addr, Comm.PacketSetParam(addr, value)));
+                else
+                    // add queue
+                    MsgQueue.Add(new HCommMsg(addr, Comm.PacketSetParam(addr, value)));
                 // result
                 return true;
             }
