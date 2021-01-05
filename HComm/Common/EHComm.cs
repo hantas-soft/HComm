@@ -8,6 +8,16 @@
         None, Serial, Ethernet, Usb
     }
     /// <summary>
+    /// Communicator connection types
+    /// </summary>
+    public enum ConnectionState
+    {
+        // Connection state
+        None, Request, Connecting, Connected,
+        // 500ms -> None
+        Disconnected, Lost, Error
+    }
+    /// <summary>
     /// Communicator command
     /// </summary>
     public enum Command

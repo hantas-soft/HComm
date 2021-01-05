@@ -51,12 +51,24 @@ Hantas tool device communication library
     hComm.GetGraph(4200, 1);        // GET graph monitoring data
 </code></pre>
 ## History
+v1.0.8
+ - connection state change event
+ 
+v1.0.7
+- thread lock timeout added
+
+v1.0.6
+- Message queue count thread-safe
+
+v1.0.5
+- GetState method immediately insert
+
 v1.0.4
 - Waiting message queue count
-- SetParam Immediately inserted
+- SetParam immediately insert
 
 v1.0.3
-- Message process queue size flexiable
+- Message process queue size flexible
 
 v1.0.2
 - Get parameter block sequence

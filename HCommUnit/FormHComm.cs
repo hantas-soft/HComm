@@ -22,7 +22,8 @@ namespace HCommUnit
             RealTime,
             RealTimeAd,
             Graph,
-            GraphAd
+            GraphAd,
+            State
         };
         private StringBuilder Log { get; } = new StringBuilder();
         private bool StateMor { get; set; }
@@ -64,7 +65,7 @@ namespace HCommUnit
                     AddLog($@"{cmd} / {addr} / {values.Length}");
                     break;
                 case Command.Write:
-                    //AddLog($@"{cmd} / {addr} / {values[1]}");
+                    AddLog($@"{cmd} / {addr} / {values[1]}");
                     break;
                 case Command.Info:
                     AddLog($@"{cmd} / {addr} / {values.Length}");
@@ -117,6 +118,12 @@ namespace HCommUnit
                     case MonitorType.Graph:
                         break;
                     case MonitorType.GraphAd:
+                        break;
+                    case MonitorType.State:
+                        // debug
+                        Invoke(new Action(() =>
+                                _hComm.GetState(3300, 21)
+                        ));
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -240,9 +247,18 @@ namespace HCommUnit
                     return;
                 // setup
                 _hComm.SetUp(type);
+                // set connection event
+                _hComm.ChangedConnection = state =>
+                {
+                    btConnect.BeginInvoke(new Action(() =>
+                    {
+                        btConnect.Text = state ? @"DISCONNECT" : @"CONNECT";
+                    }));
+                };
                 // connect
                 if (!_hComm.Connect(target, option, id))
                     return;
+                /*
                 // check timeout
                 var time = DateTime.Now;
                 // check connection state
@@ -253,6 +269,7 @@ namespace HCommUnit
                 }
                 // set state
                 btConnect.Text = @"DISCONNECT";
+                */
             }
             else
             {
@@ -280,8 +297,11 @@ namespace HCommUnit
             var value = Convert.ToUInt16(nmValue.Value);
             // check sender
             if (sender == btGetParam)
-                // get param
-                _hComm.GetParam(addr, value);
+                // debug
+                Invoke(new Action(() =>
+                    // get param
+                    _hComm.GetParam(addr, value)
+                ));
             else if (sender == btSetParam)
                 // set param
                 _hComm.SetParam(addr, value);
@@ -293,8 +313,30 @@ namespace HCommUnit
                 return;
             // check sender
             if (sender == btGetStatus)
+            {
                 // get status
-                _hComm.GetState(3300, 13);
+                //_hComm.GetState(3300, 13);
+
+                // check state
+                if(!StateMor)
+                {
+                    // set monitor type
+                    MorType = MonitorType.State;
+                    // set state
+                    StateMor = true;
+                    // start timer
+                    timer.Start();
+                }
+                else
+                {
+                    // reset monitor type
+                    MorType = MonitorType.None;
+                    // reset state
+                    StateMor = false;
+                    // stop timer
+                    timer.Stop();
+                }
+            }
             else if (sender == btGetInfo)
                 // get information
                 _hComm.GetInfo();

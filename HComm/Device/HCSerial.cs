@@ -94,10 +94,10 @@ namespace HComm.Device
         {
             // stop timer
             ProcessTimer.Change(Timeout.Infinite, Timeout.Infinite);
-            // reset event
-            Port.DataReceived -= Port_DataReceived;
             // close port
             Port.Close();
+            // reset event
+            Port.DataReceived -= Port_DataReceived;
             // result
             return true;
         }

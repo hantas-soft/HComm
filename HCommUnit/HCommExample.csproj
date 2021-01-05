@@ -68,13 +68,15 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="HComm">
-      <Version>1.0.4</Version>
-    </PackageReference>
-  </ItemGroup>
-  <ItemGroup>
+    <Reference Include="System" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HComm\HComm.csproj">
+      <Project>{2033c32b-b318-4ba8-b9d5-37b45bbe831c}</Project>
+      <Name>HComm</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

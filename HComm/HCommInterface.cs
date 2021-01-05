@@ -13,11 +13,12 @@ namespace HComm
         private IHComm Comm { get; set; }
         private Timer MsgTimer { get; }
         private List<HCommMsg> MsgQueue { get; } = new List<HCommMsg>();
+        private DateTime InfoTime { get; set; }
         
         /// <summary>
         /// HComm communicator connected state
         /// </summary>
-        public bool IsConnected => Comm != null && Comm.IsConnected;
+        public bool IsConnected { get; set; }
         /// <summary>
         /// HComm communicator type
         /// </summary>
@@ -25,11 +26,15 @@ namespace HComm
         /// <summary>
         /// HComm communicator message queue size
         /// </summary>
-        public int MaxQueueSize { get; set; } = 20;
+        public int MaxQueueSize { get; set; } = 30;
         /// <summary>
         /// HComm communicator waiting queue count
         /// </summary>
-        public int QueueCount { get { return MsgQueue.Count; } }
+        public int QueueCount
+        {
+            get { lock(MsgQueue) return MsgQueue.Count; }
+        }
+
         /// <summary>
         /// HComm data received delegate
         /// </summary>
@@ -43,6 +48,11 @@ namespace HComm
         /// <param name="packet">packet</param>
         public delegate void ReceivedRawData(byte[] packet);
         /// <summary>
+        /// HComm connection state changed delegate
+        /// </summary>
+        /// <param name="state"></param>
+        public delegate void ChangedConnectState(bool state);
+        /// <summary>
         /// HComm data received event
         /// </summary>
         public ReceivedData ReceivedMsg { get; set; }
@@ -50,6 +60,10 @@ namespace HComm
         /// HComm raw data received event
         /// </summary>
         public ReceivedRawData ReceivedRawMsg { get; set; }
+        /// <summary>
+        /// HComm connection state changed event
+        /// </summary>
+        public ChangedConnectState ChangedConnection { get; set; }
         /// <summary>
         /// HComm interface constructor
         /// </summary>
@@ -109,9 +123,7 @@ namespace HComm
             if (Type == CommType.None)
                 return false;
             // connect
-            var res = Comm.Connect(target, option, id);
-            // check res
-            if (!res)
+            if (!Comm.Connect(target, option, id))
                 return false;
             // set event
             Comm.AckReceived = AckReceivedCallback;
@@ -131,10 +143,14 @@ namespace HComm
             MsgTimer.Change(Timeout.Infinite, Timeout.Infinite);
             // reset event
             Comm.AckReceived = null;
-            // clear queue
-            MsgQueue.Clear();
             // close
             Comm.Close();
+            // reset connection state
+            ChangedConnection?.Invoke(IsConnected = false);
+            // lock queue
+            lock (MsgQueue)
+                // clear queue
+                MsgQueue.Clear();
             // result
             return true;
         }
@@ -148,7 +164,9 @@ namespace HComm
         public bool GetParam(ushort addr, ushort count)
         {
             // lock message queue
-            lock (MsgQueue)
+            if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100))) 
+                return false;
+            try
             {
                 // check max queue size
                 if (MsgQueue.Count >= MaxQueueSize)
@@ -156,16 +174,16 @@ namespace HComm
                 // check duplicate message
                 if (MsgQueue.Find(x => x.Address == addr) != null)
                     return false;
-                
+
                 // block / remain
-                var block = (ushort) (count / MaxParamBlock);
-                var remain = (ushort) (count % MaxParamBlock);
+                var block = (ushort)(count / MaxParamBlock);
+                var remain = (ushort)(count % MaxParamBlock);
                 var limit = block + (remain > 0 ? 1 : 0);
                 // check block
                 for (var i = 0; i < limit; i++)
                 {
                     // set address
-                    var start = (ushort) (addr + i * MaxParamBlock);
+                    var start = (ushort)(addr + i * MaxParamBlock);
                     // check block num
                     MsgQueue.Add(i == limit - 1 && remain > 0
                         ? new HCommMsg(start, Comm.PacketGetParam(start, remain))
@@ -173,6 +191,11 @@ namespace HComm
                 }
                 // result
                 return true;
+            }
+            finally
+            {
+                // unlock
+                Monitor.Exit(MsgQueue);
             }
         }
         /// <summary>
@@ -184,13 +207,15 @@ namespace HComm
         public bool SetParam(ushort addr, ushort value)
         {
             // lock message queue
-            lock (MsgQueue)
+            if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100))) 
+                return false;
+            try
             {
                 // check max queue size
                 if (MsgQueue.Count >= MaxQueueSize)
                     return false;
                 // check queue count
-                if (QueueCount > 0)
+                if (MsgQueue.Count > 1)
                     // inser queue
                     MsgQueue.Insert(1, new HCommMsg(addr, Comm.PacketSetParam(addr, value)));
                 else
@@ -198,6 +223,11 @@ namespace HComm
                     MsgQueue.Add(new HCommMsg(addr, Comm.PacketSetParam(addr, value)));
                 // result
                 return true;
+            }
+            finally
+            {
+                // unlock
+                Monitor.Exit(MsgQueue);
             }
         }
         /// <summary>
@@ -207,7 +237,9 @@ namespace HComm
         public bool GetInfo()
         {
             // lock message queue
-            lock (MsgQueue)
+            if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100)))
+                return false;
+            try
             {
                 // check max queue size
                 if (MsgQueue.Count >= MaxQueueSize)
@@ -216,6 +248,11 @@ namespace HComm
                 MsgQueue.Add(new HCommMsg(0, Comm.PacketGetInfo()));
                 // result
                 return true;
+            }
+            finally
+            {
+                // unlock
+                Monitor.Exit(MsgQueue);
             }
         }
         /// <summary>
@@ -227,7 +264,9 @@ namespace HComm
         public bool SetRealTime(ushort addr = 4002, ushort state = 1)
         {
             // lock message queue
-            lock (MsgQueue)
+            if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100)))
+                return false;
+            try
             {
                 // check max queue size
                 if (MsgQueue.Count >= MaxQueueSize)
@@ -239,6 +278,11 @@ namespace HComm
                 MsgQueue.Add(new HCommMsg(addr, Comm.PacketSetParam(addr, state)));
                 // result
                 return true;
+            }
+            finally
+            {
+                // unlock
+                Monitor.Exit(MsgQueue);
             }
         }
         /// <summary>
@@ -250,7 +294,9 @@ namespace HComm
         public bool SetGraph(ushort addr = 4100, ushort state = 1)
         {
             // lock message queue
-            lock (MsgQueue)
+            if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100))) 
+                return false;
+            try
             {
                 // check max queue size
                 if (MsgQueue.Count >= MaxQueueSize)
@@ -263,6 +309,11 @@ namespace HComm
                 // result
                 return true;
             }
+            finally
+            {
+                // unlock
+                Monitor.Exit(MsgQueue);
+            }
         }
         /// <summary>
         /// HComm device get current state
@@ -273,7 +324,9 @@ namespace HComm
         public bool GetState(ushort addr = 3300, ushort count = 14)
         {
             // lock message queue
-            lock (MsgQueue)
+            if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100))) 
+                return false;
+            try
             {
                 // check max queue size
                 if (MsgQueue.Count >= MaxQueueSize)
@@ -281,10 +334,20 @@ namespace HComm
                 // check duplicate message
                 if (MsgQueue.Find(x => x.Address == addr) != null)
                     return false;
-                // add queue
-                MsgQueue.Add(new HCommMsg(addr, Comm.PacketGetState(addr, count)));
+                // check queue count
+                if (MsgQueue.Count > 1)
+                    // inser queue
+                    MsgQueue.Insert(1, new HCommMsg(addr, Comm.PacketGetState(addr, count)));
+                else
+                    // add queue
+                    MsgQueue.Add(new HCommMsg(addr, Comm.PacketGetState(addr, count)));
                 // result
                 return true;
+            }
+            finally
+            {
+                // unlock
+                Monitor.Exit(MsgQueue);
             }
         }
         /// <summary>
@@ -296,7 +359,9 @@ namespace HComm
         public bool GetGraph(ushort addr = 4200, ushort count = 1)
         {
             // lock message queue
-            lock (MsgQueue)
+            if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100))) 
+                return false;
+            try
             {
                 // check max queue size
                 if (MsgQueue.Count >= MaxQueueSize)
@@ -309,6 +374,11 @@ namespace HComm
                 // result
                 return true;
             }
+            finally
+            {
+                // unlock
+                Monitor.Exit(MsgQueue);
+            }
         }
 
         private void ProcessTimer(object state)
@@ -320,39 +390,43 @@ namespace HComm
             lock (MsgQueue)
             {
                 // check queue count
-                if (MsgQueue.Count == 0)
-                    return;
-                // get first message
-                var msg = MsgQueue[0];
-                // check queue active
-                if (!msg.Active)
+                if (MsgQueue.Count > 0)
                 {
-                    // write
-                    if (!Comm.Write(msg.Packet.ToArray(), msg.Packet.Count))
-                        return;
-                    // active waiting
-                    msg.Time = DateTime.Now;
-                    msg.Active = true;
+                    // get first message
+                    var msg = MsgQueue[0];
+                    // check queue active
+                    if (!msg.Active)
+                    {
+                        // write
+                        if (!Comm.Write(msg.Packet.ToArray(), msg.Packet.Count))
+                            return;
+                        // active waiting
+                        msg.Time = DateTime.Now;
+                        msg.Active = true;
+                    }
+                    else
+                    {
+                        // laps
+                        var laps = DateTime.Now - msg.Time;
+                        // check time
+                        if (laps.TotalMilliseconds < 500)
+                            return;
+                        // reset timer
+                        msg.Active = false;
+                        msg.Retry -= 1;
+                        msg.Time = DateTime.Now;
+                        // check retry count
+                        if (msg.Retry >= 1) 
+                            return;
+                        // disconnect
+                        Close();
+                        // debug
+                        Console.WriteLine(@"===== Communication error =====");
+                    }
                 }
-                else
-                {
-                    // laps
-                    var laps = DateTime.Now - msg.Time;
-                    // check time
-                    if (laps.TotalMilliseconds < 500)
-                        return;
-                    // reset timer
-                    msg.Active = false;
-                    msg.Retry -= 1;
-                    msg.Time = DateTime.Now;
-                    // check retry count
-                    if (msg.Retry >= 1) 
-                        return;
-                    // error
-                    Console.WriteLine(@"============= Communication error ===");
-                    // clear
-                    MsgQueue.Remove(msg);
-                }
+                else if((DateTime.Now - InfoTime).TotalSeconds > 5)
+                    // request information
+                    GetInfo();
             }
         }
         private void AckReceivedCallback(Command cmd, byte[] packet)
@@ -514,6 +588,12 @@ namespace HComm
                            cmd == Command.Mor && msg.Address < 3200 && msg.Address > 3237
                     ? 0
                     : msg.Address;
+                // check state
+                if (!IsConnected)
+                    // change state
+                    ChangedConnection?.Invoke(IsConnected = true);
+                // set information time
+                InfoTime = DateTime.Now;
                 // update message
                 ReceivedMsg?.Invoke(cmd, addr, values);
                 // check passing
