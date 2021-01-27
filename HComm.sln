@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "SetupHCommExample", "SetupHCommExmple\SetupHCommExmple.vdproj", "{7E9B44B3-BF26-4E33-99BE-2DB3FE69A7BB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,6 +28,8 @@ Global
 		{E9405CC2-1320-441C-B3F5-14A5630D5C4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E9405CC2-1320-441C-B3F5-14A5630D5C4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E9405CC2-1320-441C-B3F5-14A5630D5C4F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E9B44B3-BF26-4E33-99BE-2DB3FE69A7BB}.Debug|Any CPU.ActiveCfg = Debug
+		{7E9B44B3-BF26-4E33-99BE-2DB3FE69A7BB}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

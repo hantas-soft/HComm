@@ -80,7 +80,7 @@ namespace HCommUnit
                     // check null data
                     if (values == null || values.Length < 2)
                         break;
-                    AddLog($@"GRAPH: {values[0] & 0xFF} / {(values[0] >> 8) & 0xFF}");
+                    AddLog($@"GRAPH: {values[0] & 0xFF} / {(values[0] >> 8) & 0xFF} / {values.Length}");
                     break;
                 case Command.Error:
                     AddLog($@"{cmd} / {addr} / {values[0]}");
@@ -98,6 +98,11 @@ namespace HCommUnit
             var hex = string.Concat(packet.Select(d => $@"0x{d:X2} "));
             // add log
             AddLog(hex, true);
+        }
+        private static void ChangedState(bool state)
+        {
+            // debug
+            Console.WriteLine($@"connection changed: {state}");
         }
         private void timer_Tick(object sender, EventArgs e)
         {
@@ -178,7 +183,7 @@ namespace HCommUnit
             cbType.SelectedIndex = 0;
 
             // check HComm interface
-            _hComm = new HCommInterface {ReceivedMsg = ReceivedMsg, ReceivedRawMsg = ReceivedRawMsg};
+            _hComm = new HCommInterface {ReceivedMsg = ReceivedMsg, ReceivedRawMsg = ReceivedRawMsg, ChangedConnection = ChangedState };
             // start application
             AddLog(@"Start application");
         }
@@ -203,7 +208,7 @@ namespace HCommUnit
         private void btConnect_Click(object sender, EventArgs e)
         {
             // check connection state
-            if (!_hComm.IsConnected)
+            if (_hComm.State == ConnectionState.None)
             {
                 // get type
                 var type = (CommType)(cbType.SelectedIndex + 1);
@@ -247,7 +252,7 @@ namespace HCommUnit
                     return;
                 // setup
                 _hComm.SetUp(type);
-                // set connection event
+                // set event
                 _hComm.ChangedConnection = state =>
                 {
                     btConnect.BeginInvoke(new Action(() =>
@@ -258,39 +263,17 @@ namespace HCommUnit
                 // connect
                 if (!_hComm.Connect(target, option, id))
                     return;
-                /*
-                // check timeout
-                var time = DateTime.Now;
-                // check connection state
-                while (!_hComm.IsConnected)
-                {
-                    if ((DateTime.Now - time).TotalMilliseconds > Timeout)
-                        return;
-                }
-                // set state
-                btConnect.Text = @"DISCONNECT";
-                */
             }
             else
             {
                 // close
                 _hComm.Close();
-                // check timeout
-                var time = DateTime.Now;
-                // check connection state
-                while (_hComm.IsConnected)
-                {
-                    if ((DateTime.Now - time).TotalMilliseconds > Timeout)
-                        return;
-                }
-                // set state
-                btConnect.Text = @"CONNECT";
             }
         }
         private void btActionParam_Click(object sender, EventArgs e)
         {
             // check connection state
-            if (!_hComm.IsConnected)
+            if (_hComm.State != ConnectionState.Connected)
                 return;
             // get address / value
             var addr = Convert.ToUInt16(nmAddr.Value);
@@ -309,7 +292,7 @@ namespace HCommUnit
         private void btActionStatus_Click(object sender, EventArgs e)
         {
             // check connection state
-            if (!_hComm.IsConnected)
+            if (_hComm.State != ConnectionState.Connected)
                 return;
             // check sender
             if (sender == btGetStatus)
@@ -344,7 +327,7 @@ namespace HCommUnit
         private void btActionMor_Click(object sender, EventArgs e)
         {
             // check connection state
-            if (!_hComm.IsConnected)
+            if (_hComm.State != ConnectionState.Connected)
                 return;
             // check sender
             if ((sender == btMorStart || sender == btMorStartAd) && !StateMor)
@@ -369,7 +352,7 @@ namespace HCommUnit
         private void btGraphSet_Click(object sender, EventArgs e)
         {
             // check connection state
-            if (!_hComm.IsConnected)
+            if (_hComm.State != ConnectionState.Connected)
                 return;
             // check state
             if (StateGraph)
@@ -388,7 +371,7 @@ namespace HCommUnit
         private void btActionGraph_Click(object sender, EventArgs e)
         {
             // check connection state
-            if (!_hComm.IsConnected)
+            if (_hComm.State != ConnectionState.Connected)
                 return;
             // check sender
             if ((sender == btGraphStart || sender == btGraphStartAd) && !StateGraph)

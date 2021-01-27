@@ -13,6 +13,10 @@ namespace HComm.Common
     /// </summary>
     /// <param name="packet"></param>
     public delegate void AckRawData(byte[] packet);
+    /// <summary>
+    /// HCommInterface changed connection state delegate
+    /// </summary>
+    public delegate void ChangedConnection(bool state);
     public interface IHComm
     {
         /// <summary>
@@ -27,6 +31,10 @@ namespace HComm.Common
         /// HCommInterface raw acknowledge event
         /// </summary>
         AckRawData AckRawReceived { set; }
+        /// <summary>
+        /// HCommInterface connection state changed
+        /// </summary>
+        ChangedConnection ConnectionChanged { get; set; } 
         /// <summary>
         /// HCommInterface connect
         /// </summary>

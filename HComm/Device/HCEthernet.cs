@@ -23,13 +23,17 @@ namespace HComm.Device
         /// </summary>
         public bool IsConnected { get; private set; }
         /// <summary>
-        /// HComm ethenrnet received data event
+        /// HComm ethernet received data event
         /// </summary>
         public AckData AckReceived { get; set; }
         /// <summary>
         /// HCommInterface ethernet raw acknowledge event
         /// </summary>
         public AckRawData AckRawReceived { get; set; }
+        /// <summary>
+        /// HCommInterface connection state changed
+        /// </summary>
+        public ChangedConnection ConnectionChanged { get; set; } 
         /// <summary>
         /// HComm ethernet constructor
         /// </summary>
@@ -63,17 +67,6 @@ namespace HComm.Device
 
             try
             {
-                // check connection state
-                if (IsConnected)
-                {
-                    // close
-                    Close();
-                    // waiting close
-                    while (IsConnected)
-                        // debug
-                        Console.WriteLine(@"Waiting close session");
-                }
-
                 // get remote point
                 var client = new IPEndPoint(ip, option);
                 // try connect
@@ -111,7 +104,7 @@ namespace HComm.Device
         public bool Write(byte[] packet, int length)
         {
             // check connection
-            if (!IsConnected)
+            if (!Session.IsConnected)
                 return false;
 
             try
@@ -260,8 +253,6 @@ namespace HComm.Device
 
         private void Session_Connected(object sender, EventArgs e)
         {
-            // set connected state
-            IsConnected = true;
             // clear buffer
             ReceiveBuf.Clear();
             AnalyzeBuf.Clear();
@@ -282,13 +273,13 @@ namespace HComm.Device
             // clear buffer
             ReceiveBuf.Clear();
             AnalyzeBuf.Clear();
-            // reset connected state
-            IsConnected = false;
+            // update event
+            ConnectionChanged?.Invoke(IsConnected = false);
         }
         private void Session_Error(object sender, ErrorEventArgs e)
         {
             // error
-            AckReceived.Invoke(Command.Error, new byte[] {0xFF});
+            AckReceived?.Invoke(Command.Error, new byte[] {0xFF});
         }
         private void SessionDataReceived(object sender, DataEventArgs e)
         {
@@ -358,7 +349,8 @@ namespace HComm.Device
                         // break
                         break;
                     }
-
+                    // update event
+                    ConnectionChanged?.Invoke(IsConnected = true);
                     // process message
                     AckReceived?.Invoke(cmd, packet.Skip(8).Take(length).ToArray());
                     // remove analyze buffer

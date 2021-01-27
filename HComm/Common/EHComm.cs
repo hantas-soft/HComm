@@ -13,9 +13,7 @@
     public enum ConnectionState
     {
         // Connection state
-        None, Request, Connecting, Connected,
-        // 500ms -> None
-        Disconnected, Lost, Error
+        None, Connecting, Connected, Disconnecting, Disconnected
     }
     /// <summary>
     /// Communicator command

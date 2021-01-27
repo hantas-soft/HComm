@@ -22,7 +22,7 @@ namespace HComm.Device
         /// <summary>
         /// HComm usb connection state
         /// </summary>
-        public bool IsConnected => UsbDevice?.IsDeviceConnected ?? false;
+        public bool IsConnected { get; private set; }
         /// <summary>
         /// HComm usb received data event
         /// </summary>
@@ -31,6 +31,10 @@ namespace HComm.Device
         /// HCommInterface usb raw acknowledge event
         /// </summary>
         public AckRawData AckRawReceived { get; set; }
+        /// <summary>
+        /// HCommInterface connection state changed
+        /// </summary>
+        public ChangedConnection ConnectionChanged { get; set; } 
 
         /// <summary>
         /// HComm usb connect
@@ -47,10 +51,6 @@ namespace HComm.Device
             
             try
             {
-                // check device
-                if (IsConnected)
-                    // close
-                    Close();
                 // open
                 var devices = DeviceDiscovery.FindHidDevices(new VidPidMatcher(Vid, Pid));
                 // check device
@@ -101,6 +101,10 @@ namespace HComm.Device
             UsbDevice.Disconnect();
             // clear
             UsbDevice = null;
+            // clear state
+            if(IsConnected)
+                // update event
+                ConnectionChanged?.Invoke(IsConnected = false);
             
             // result
             return true;
@@ -114,9 +118,9 @@ namespace HComm.Device
         public bool Write(byte[] packet, int length)
         {
             // check connection
-            if (!IsConnected)
+            if (!UsbDevice.IsDeviceConnected)
                 return false;
-            
+ 
             try
             {
                 // write packet
@@ -323,6 +327,10 @@ namespace HComm.Device
                     // check body length
                     if (length > AnalyzeBuf.Count)
                         break;
+                    // check state
+                    if (!IsConnected)
+                        // update event
+                        ConnectionChanged?.Invoke(IsConnected = true);
                     // get packet
                     var packet = AnalyzeBuf.Take(UsbDevice.InputReportByteLength).ToArray();
                     // process acknowledge

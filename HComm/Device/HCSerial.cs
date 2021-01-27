@@ -21,8 +21,7 @@ namespace HComm.Device
         /// <summary>
         /// HCommInterface serial connection state
         /// </summary>
-        public bool IsConnected => Port.IsOpen;
-
+        public bool IsConnected { get; private set; }
         /// <summary>
         /// HCommInterface serial acknowledge event
         /// </summary>
@@ -31,7 +30,10 @@ namespace HComm.Device
         /// HCommInterface serial raw acknowledge event
         /// </summary>
         public AckRawData AckRawReceived { get; set; }
-
+        /// <summary>
+        /// HCommInterface connection state changed
+        /// </summary>
+        public ChangedConnection ConnectionChanged { get; set; } 
         /// <summary>
         /// HCommInterface serial connect
         /// </summary>
@@ -53,10 +55,6 @@ namespace HComm.Device
 
             try
             {
-                // check connection
-                if (IsConnected)
-                    // close
-                    Close();
                 // set com port
                 Port.PortName = target;
                 Port.BaudRate = option;
@@ -98,6 +96,10 @@ namespace HComm.Device
             Port.Close();
             // reset event
             Port.DataReceived -= Port_DataReceived;
+            // clear state
+            if(IsConnected)
+                // update event
+                ConnectionChanged?.Invoke(IsConnected = false);
             // result
             return true;
         }
@@ -110,7 +112,7 @@ namespace HComm.Device
         public bool Write(byte[] packet, int length)
         {
             // check connection
-            if (!IsConnected)
+            if (!Port.IsOpen)
                 return false;
 
             try
@@ -279,7 +281,7 @@ namespace HComm.Device
                     // clear receive buffer
                     ReceiveBuf.Clear();
                 }
-
+                
                 // timeout
                 var timeout = DateTime.Now;
                 // check analyze buffer count
@@ -350,8 +352,15 @@ namespace HComm.Device
                         // error
                         AckReceived?.Invoke(Command.Error, new byte[] {0xFF});
                     else
+                    {
+                        // check state
+                        if (!IsConnected)
+                            // update event
+                            ConnectionChanged?.Invoke(IsConnected = true);
                         // process acknowledge
                         AckReceived?.Invoke(cmd, packet.Skip(2).Take(length - 4).ToArray());
+                    }
+
                     // remove analyze buffer
                     AnalyzeBuf.RemoveRange(0, length);
                 }

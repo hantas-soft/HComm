@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
 using HComm.Common;
@@ -9,16 +10,19 @@ namespace HComm
     public class HCommInterface
     {
         private const int ProcessTime = 10;
-        private const int MaxParamBlock = 30;
         private IHComm Comm { get; set; }
         private Timer MsgTimer { get; }
         private List<HCommMsg> MsgQueue { get; } = new List<HCommMsg>();
+        private DateTime ConnectionTime { get; set; }
         private DateTime InfoTime { get; set; }
         
+        /*
         /// <summary>
         /// HComm communicator connected state
         /// </summary>
         public bool IsConnected { get; set; }
+        */
+        public ConnectionState State { get; private set; } = ConnectionState.None;
         /// <summary>
         /// HComm communicator type
         /// </summary>
@@ -32,8 +36,30 @@ namespace HComm
         /// </summary>
         public int QueueCount
         {
-            get { lock(MsgQueue) return MsgQueue.Count; }
+            get
+            {
+                // lock message queue
+                if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100)))
+                    return 0;
+                try
+                {
+                    return MsgQueue.Count;
+                }
+                finally
+                {
+                    // unlock
+                    Monitor.Exit(MsgQueue);
+                }
+            }
         }
+        /// <summary>
+        /// HComm communicator message block size (USB > 30 not working)
+        /// </summary>
+        public int MaxParamBlock { get; set; } = 100;
+        /// <summary>
+        /// Device information
+        /// </summary>
+        public DeviceInfo Information { get; } = new DeviceInfo();
 
         /// <summary>
         /// HComm data received delegate
@@ -76,17 +102,10 @@ namespace HComm
         /// <summary>
         /// HComm interface setup
         /// </summary>
-        /// <param name="type"></param>
-        public void SetUp(CommType type)
+        /// <param name="type">communication type</param>
+        /// <returns>result</returns>
+        public bool SetUp(CommType type)
         {
-            // check communicator
-            if (IsConnected)
-            {
-                // close
-                Close();
-                // clear
-                Comm = null;
-            }
             // check type
             switch (type)
             {
@@ -109,6 +128,12 @@ namespace HComm
             }
             // set type
             Type = type;
+            // set connection event
+            Comm.ConnectionChanged = ConnectionChanged;
+            // set state
+            State = ConnectionState.None;
+            // result
+            return Comm != null;
         }
         /// <summary>
         /// HComm interface connect
@@ -119,18 +144,22 @@ namespace HComm
         /// <returns>result</returns>
         public bool Connect(string target, int option, byte id = 0x01)
         {
-            // check communicator type
-            if (Type == CommType.None)
+            // check state
+            if (State != ConnectionState.None)
                 return false;
-            // connect
+            // connect request
             if (!Comm.Connect(target, option, id))
                 return false;
-            // set event
-            Comm.AckReceived = AckReceivedCallback;
-            Comm.AckRawReceived = AckRawReceived;
+            // set time state
+            ConnectionTime = DateTime.Now;
+            InfoTime = DateTime.Now;
+            // set state
+            State = ConnectionState.Connecting;
+            // clear message queue
+            MsgQueue.Clear();
             // start process timer
             MsgTimer.Change(ProcessTime, ProcessTime);
-            // result
+
             return true;
         }
         /// <summary>
@@ -139,18 +168,12 @@ namespace HComm
         /// <returns>result</returns>
         public bool Close()
         {
-            // stop process timer
-            MsgTimer.Change(Timeout.Infinite, Timeout.Infinite);
-            // reset event
-            Comm.AckReceived = null;
+            // set state
+            State = ConnectionState.Disconnecting;
+            // set connection time
+            ConnectionTime = DateTime.Now;
             // close
             Comm.Close();
-            // reset connection state
-            ChangedConnection?.Invoke(IsConnected = false);
-            // lock queue
-            lock (MsgQueue)
-                // clear queue
-                MsgQueue.Clear();
             // result
             return true;
         }
@@ -174,20 +197,24 @@ namespace HComm
                 // check duplicate message
                 if (MsgQueue.Find(x => x.Address == addr) != null)
                     return false;
-
+                var blockSize = MaxParamBlock;
+                // check usb type
+                if (Type == CommType.Usb)
+                    // fixed size
+                    blockSize = 30;
                 // block / remain
-                var block = (ushort)(count / MaxParamBlock);
-                var remain = (ushort)(count % MaxParamBlock);
+                var block = (ushort)(count / blockSize);
+                var remain = (ushort)(count % blockSize);
                 var limit = block + (remain > 0 ? 1 : 0);
                 // check block
                 for (var i = 0; i < limit; i++)
                 {
                     // set address
-                    var start = (ushort)(addr + i * MaxParamBlock);
+                    var start = (ushort)(addr + i * blockSize);
                     // check block num
                     MsgQueue.Add(i == limit - 1 && remain > 0
                         ? new HCommMsg(start, Comm.PacketGetParam(start, remain))
-                        : new HCommMsg(start, Comm.PacketGetParam(start, MaxParamBlock)));
+                        : new HCommMsg(start, Comm.PacketGetParam(start, (ushort)blockSize)));
                 }
                 // result
                 return true;
@@ -384,12 +411,29 @@ namespace HComm
         private void ProcessTimer(object state)
         {
             // check connection state
-            if (!Comm.IsConnected)
-                return;
-            // lock queue
-            lock (MsgQueue)
+            if ((State == ConnectionState.Connecting || State == ConnectionState.Disconnecting) &&
+                (DateTime.Now - ConnectionTime).TotalSeconds > 3 || (DateTime.Now - InfoTime).TotalSeconds > 3)
             {
-                // check queue count
+                // stop process timer
+                MsgTimer.Change(Timeout.Infinite, Timeout.Infinite);
+                // reset event
+                Comm.AckReceived = null;
+                Comm.AckRawReceived = null;
+                // clear communicator
+                Comm = null;
+                // change state
+                State = ConnectionState.None;
+                // update event
+                ChangedConnection?.Invoke(false);
+                // exit
+                return;
+            }
+            // lock message queue
+            if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100)))
+                return;
+            try
+            {
+                // check message queue
                 if (MsgQueue.Count > 0)
                 {
                     // get first message
@@ -416,24 +460,29 @@ namespace HComm
                         msg.Retry -= 1;
                         msg.Time = DateTime.Now;
                         // check retry count
-                        if (msg.Retry >= 1) 
+                        if (msg.Retry > 0)
                             return;
-                        // disconnect
-                        Close();
-                        // debug
-                        Console.WriteLine(@"===== Communication error =====");
+                        // remove message
+                        MsgQueue.Remove(msg);
+                        // error
+                        ReceivedMsg?.Invoke(Command.Error, 0, new int[] { 0x00 });
                     }
                 }
-                else if((DateTime.Now - InfoTime).TotalSeconds > 5)
-                    // request information
+                else if ((DateTime.Now - InfoTime).TotalSeconds > 1)
+                    // get information
                     GetInfo();
+            }
+            finally
+            {
+                // unlock msg queue
+                Monitor.Exit(MsgQueue);
             }
         }
         private void AckReceivedCallback(Command cmd, byte[] packet)
         {
             int[] values = null;
             var length = 0;
-            int count;
+            int count = 0;
 
             // check command
             switch (cmd)
@@ -491,11 +540,11 @@ namespace HComm
                     // check length
                     if (length == packet.Length - 1)
                     {
-                        count = length / 2;
+                        count = length;
                         values = new int[count];
                         // set values
                         for (var i = 0; i < count; i++)
-                            values[i] = (packet[i * 2 + 1] << 8) | packet[i * 2 + 2];
+                            values[i] = packet[i + 1];
                     }
                     break;
                 case Command.Graph:
@@ -548,7 +597,7 @@ namespace HComm
                     // check length
                     if (length > 1 && length == packet.Length - 1)
                     {
-                        count = (length - 2) / 2;
+                        count = (length - 2) / 2 + 1;
                         values = new int[count];
                         // set values
                         for (var i = 0; i < count; i++)
@@ -578,7 +627,9 @@ namespace HComm
                     throw new ArgumentOutOfRangeException(nameof(cmd), cmd, null);
             }
             // lock message queue
-            lock (MsgQueue)
+            if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100)))
+                return;
+            try
             {
                 // get message
                 var msg = MsgQueue.Count > 0 ? MsgQueue[0] : null;
@@ -588,14 +639,14 @@ namespace HComm
                            cmd == Command.Mor && msg.Address < 3200 && msg.Address > 3237
                     ? 0
                     : msg.Address;
-                // check state
-                if (!IsConnected)
-                    // change state
-                    ChangedConnection?.Invoke(IsConnected = true);
-                // set information time
-                InfoTime = DateTime.Now;
+                // check information
+                if (cmd == Command.Info && (count == 12 || count == 13))
+                    // set info
+                    Information.SetInfo(values);
                 // update message
                 ReceivedMsg?.Invoke(cmd, addr, values);
+                // set info time
+                InfoTime = DateTime.Now;
                 // check passing
                 if (msg == null ||
                     cmd == Command.Graph || cmd == Command.GraphRes ||
@@ -604,11 +655,101 @@ namespace HComm
                 // clear first queue
                 MsgQueue.RemoveAt(0);
             }
+            finally
+            {
+                // unlock
+                Monitor.Exit(MsgQueue);
+            }
         }
         private void AckRawReceived(byte[] packet)
         {
             // update event
             ReceivedRawMsg?.Invoke(packet);
+        }
+        private void ConnectionChanged(bool state)
+        {
+            // check state
+            switch (State)
+            {
+                case ConnectionState.None:
+                    break;
+                case ConnectionState.Connecting:
+                    // check state
+                    if (state)
+                    {
+                        // change state
+                        State = ConnectionState.Connected;
+                        // set event
+                        Comm.AckReceived = AckReceivedCallback;
+                        Comm.AckRawReceived = AckRawReceived;
+                        // update event
+                        ChangedConnection?.Invoke(true);
+                    }
+                    break;
+                case ConnectionState.Connected:
+                    break;
+                case ConnectionState.Disconnecting:
+                    // check state
+                    if (!state)
+                    {
+                        // stop process timer
+                        MsgTimer.Change(Timeout.Infinite, Timeout.Infinite);
+                        // reset event
+                        Comm.AckReceived = null;
+                        Comm.AckRawReceived = null;
+                        // clear communicator
+                        Comm = null;
+                        // change state
+                        State = ConnectionState.None;
+                        // update event
+                        ChangedConnection?.Invoke(false);
+                    }
+                    break;
+                case ConnectionState.Disconnected:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        public class DeviceInfo
+        {
+            public List<byte> Values { get; } = new List<byte>();
+            /// <summary>
+            /// Driver id
+            /// </summary>
+            public int DriverId => (Values[0] << 8) | Values[1];
+            /// <summary>
+            /// Controller model number
+            /// </summary>
+            public int Controller => (Values[2] << 8) | Values[3];
+            /// <summary>
+            /// Driver model number
+            /// </summary>
+            public int Driver => (Values[4] << 8) | Values[5];
+            /// <summary>
+            /// Device version
+            /// </summary>
+            public string Version => ((Values[6] << 8) | Values[7]).ToString("D4").Insert(3, ".").Insert(1, ".");
+            /// <summary>
+            /// Driver serial number
+            /// </summary>
+            public string Serial =>
+                string.Join("", Values.Skip(8).Take(Values.Count - 8).Reverse().Select(x => $@"{x:D2}").ToArray());
+                
+            /// <summary>
+            /// Set data information
+            /// </summary>
+            /// <param name="data">packet data</param>
+            public void SetInfo(IEnumerable<int> data)
+            {
+                // clear values
+                Values.Clear();
+                // check data
+                foreach (var value in data)
+                    // add dat
+                    Values.Add((byte) value);
+            }
         }
     }
 }
