@@ -263,6 +263,8 @@ namespace HComm.Device
                 ProcessTimer = new Timer(ProcessTimerCallback);
             // start timer
             ProcessTimer.Change(ProcessTime, ProcessTime);
+            // update event
+            ConnectionChanged?.Invoke(IsConnected = true);
         }
         private void Session_Closed(object sender, EventArgs e)
         {
@@ -349,8 +351,6 @@ namespace HComm.Device
                         // break
                         break;
                     }
-                    // update event
-                    ConnectionChanged?.Invoke(IsConnected = true);
                     // process message
                     AckReceived?.Invoke(cmd, packet.Skip(8).Take(length).ToArray());
                     // remove analyze buffer

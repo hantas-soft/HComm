@@ -22,7 +22,7 @@ namespace HComm
         /// </summary>
         public bool IsConnected { get; set; }
         */
-        public ConnectionState State { get; private set; } = ConnectionState.None;
+        public ConnectionState State { get; private set; } = ConnectionState.Disconnected;
         /// <summary>
         /// HComm communicator type
         /// </summary>
@@ -56,6 +56,10 @@ namespace HComm
         /// HComm communicator message block size (USB > 30 not working)
         /// </summary>
         public int MaxParamBlock { get; set; } = 100;
+        /// <summary>
+        /// HComm communicator automatic request information command
+        /// </summary>
+        public bool AutoRequestInfo { get; set; } = true;
         /// <summary>
         /// Device information
         /// </summary>
@@ -131,7 +135,7 @@ namespace HComm
             // set connection event
             Comm.ConnectionChanged = ConnectionChanged;
             // set state
-            State = ConnectionState.None;
+            State = ConnectionState.Disconnected;
             // result
             return Comm != null;
         }
@@ -145,7 +149,7 @@ namespace HComm
         public bool Connect(string target, int option, byte id = 0x01)
         {
             // check state
-            if (State != ConnectionState.None)
+            if (State != ConnectionState.Disconnected)
                 return false;
             // connect request
             if (!Comm.Connect(target, option, id))
@@ -184,7 +188,7 @@ namespace HComm
         /// <param name="addr">address</param>
         /// <param name="count">count</param>
         /// <returns>result</returns>
-        public bool GetParam(ushort addr, ushort count)
+        public bool GetParam(ushort addr, ushort count, bool merge = false)
         {
             // lock message queue
             if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100))) 
@@ -203,19 +207,25 @@ namespace HComm
                     // fixed size
                     blockSize = 30;
                 // block / remain
-                var block = (ushort)(count / blockSize);
-                var remain = (ushort)(count % blockSize);
-                var limit = block + (remain > 0 ? 1 : 0);
-                // check block
-                for (var i = 0; i < limit; i++)
+                var block = (ushort) (count / blockSize);
+                var remain = (ushort) (count % blockSize);
+                var limit = block + (remain > 0 || block == 0 && remain == 0 ? 1 : 0);
+                // check merge block
+                if (!merge)
                 {
-                    // set address
-                    var start = (ushort)(addr + i * blockSize);
-                    // check block num
-                    MsgQueue.Add(i == limit - 1 && remain > 0
-                        ? new HCommMsg(start, Comm.PacketGetParam(start, remain))
-                        : new HCommMsg(start, Comm.PacketGetParam(start, (ushort)blockSize)));
+                    // check block
+                    for (var i = 0; i < limit; i++)
+                    {
+                        // set address
+                        var start = (ushort) (addr + i * blockSize);
+                        // check block num
+                        MsgQueue.Add(i == limit - 1 && remain != 0 || limit == 1 && block == 0 && remain == 0
+                            ? new HCommMsg(start, Comm.PacketGetParam(start, remain))
+                            : new HCommMsg(start, Comm.PacketGetParam(start, (ushort) blockSize)));
+                    }
                 }
+                else
+                    MsgQueue.Add(new HCommMsg(addr, Comm.PacketGetParam(addr, count)));
                 // result
                 return true;
             }
@@ -411,18 +421,19 @@ namespace HComm
         private void ProcessTimer(object state)
         {
             // check connection state
-            if ((State == ConnectionState.Connecting || State == ConnectionState.Disconnecting) &&
-                (DateTime.Now - ConnectionTime).TotalSeconds > 3 || (DateTime.Now - InfoTime).TotalSeconds > 3)
+            if (AutoRequestInfo && (DateTime.Now - ConnectionTime).TotalSeconds > 3)
             {
                 // stop process timer
                 MsgTimer.Change(Timeout.Infinite, Timeout.Infinite);
+                // disconnect
+                Comm.Close();
                 // reset event
                 Comm.AckReceived = null;
                 Comm.AckRawReceived = null;
                 // clear communicator
                 Comm = null;
                 // change state
-                State = ConnectionState.None;
+                State = ConnectionState.Disconnected;
                 // update event
                 ChangedConnection?.Invoke(false);
                 // exit
@@ -468,7 +479,7 @@ namespace HComm
                         ReceivedMsg?.Invoke(Command.Error, 0, new int[] { 0x00 });
                     }
                 }
-                else if ((DateTime.Now - InfoTime).TotalSeconds > 1)
+                else if (AutoRequestInfo && (DateTime.Now - InfoTime).TotalSeconds > 1)
                     // get information
                     GetInfo();
             }
@@ -483,6 +494,9 @@ namespace HComm
             int[] values = null;
             var length = 0;
             int count = 0;
+
+            // reset connection time
+            ConnectionTime = DateTime.Now;
 
             // check command
             switch (cmd)
@@ -648,7 +662,7 @@ namespace HComm
                 // set info time
                 InfoTime = DateTime.Now;
                 // check passing
-                if (msg == null ||
+                if (msg == null || MsgQueue.Count == 0 ||
                     cmd == Command.Graph || cmd == Command.GraphRes ||
                     cmd == Command.Mor && msg.Address < 3200 && msg.Address > 3237)
                     return;
@@ -700,7 +714,7 @@ namespace HComm
                         // clear communicator
                         Comm = null;
                         // change state
-                        State = ConnectionState.None;
+                        State = ConnectionState.Disconnected;
                         // update event
                         ChangedConnection?.Invoke(false);
                     }

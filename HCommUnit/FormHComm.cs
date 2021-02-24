@@ -99,10 +99,15 @@ namespace HCommUnit
             // add log
             AddLog(hex, true);
         }
-        private static void ChangedState(bool state)
+        private void ChangedState(bool state)
         {
             // debug
             Console.WriteLine($@"connection changed: {state}");
+            Invoke(new EventHandler(delegate
+            {
+                // set button state
+                btConnect.Text = state ? $@"Disconnect" : $@"Connect";
+            }));            
         }
         private void timer_Tick(object sender, EventArgs e)
         {
@@ -208,7 +213,7 @@ namespace HCommUnit
         private void btConnect_Click(object sender, EventArgs e)
         {
             // check connection state
-            if (_hComm.State == ConnectionState.None)
+            if (_hComm.State == ConnectionState.Disconnected)
             {
                 // get type
                 var type = (CommType)(cbType.SelectedIndex + 1);
@@ -252,14 +257,8 @@ namespace HCommUnit
                     return;
                 // setup
                 _hComm.SetUp(type);
-                // set event
-                _hComm.ChangedConnection = state =>
-                {
-                    btConnect.BeginInvoke(new Action(() =>
-                    {
-                        btConnect.Text = state ? @"DISCONNECT" : @"CONNECT";
-                    }));
-                };
+                // set option
+                //_hComm.AutoRequestInfo = false;
                 // connect
                 if (!_hComm.Connect(target, option, id))
                     return;
@@ -283,7 +282,7 @@ namespace HCommUnit
                 // debug
                 Invoke(new Action(() =>
                     // get param
-                    _hComm.GetParam(addr, value)
+                    _hComm.GetParam(addr, value, true)
                 ));
             else if (sender == btSetParam)
                 // set param

@@ -107,6 +107,34 @@ Hantas tool device communication library
     }
 </code></pre>
 ## History
+
+v1.2.7
+ - Get Param method 'merge' argument added.
+
+v1.2.6
+ - Address 2900~ added (Air tool only)
+
+v1.2.5 
+ - Connection timeout bug fixed 2
+
+v1.2.4
+ - Connection timeout bug fixed
+
+v1.2.3
+ - Connection disconnect state bug fixed 2
+
+v1.2.2
+ - Connection disconnect state bug fixed
+
+v1.2.1
+ - Connection timeout bug fixed
+
+v1.2.0
+ - Automatic request command for information
+
+v1.1.9
+ - Session state intialize bug fixed
+
 v1.1.8
  - HComm x86 -> AnyCPU
  - System.IO.Ports version changed
