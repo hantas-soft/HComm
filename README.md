@@ -109,8 +109,9 @@ Hantas tool device communication library
 ## History
 
 v1.2.8
- - 
-
+ - Change monitor timeout laps
+ - Command comm object null check
+ 
 v1.2.7
  - Get Param method 'merge' argument added.
  - lock timeout bug fixed.
