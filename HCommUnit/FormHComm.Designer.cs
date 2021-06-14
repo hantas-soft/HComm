@@ -650,11 +650,6 @@ namespace HCommUnit
             0,
             0,
             0});
-            this.nmID.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
             this.nmID.Name = "nmID";
             this.nmID.Size = new System.Drawing.Size(120, 21);
             this.nmID.TabIndex = 13;

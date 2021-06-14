@@ -10,11 +10,14 @@ namespace HComm
     public class HCommInterface
     {
         private const int ProcessTime = 10;
+        private const int MonitorTimeout = 100;
+        private readonly object _syncObject = new object();
         private IHComm Comm { get; set; }
         private Timer MsgTimer { get; }
         private List<HCommMsg> MsgQueue { get; } = new List<HCommMsg>();
         private DateTime ConnectionTime { get; set; }
         private DateTime InfoTime { get; set; }
+        private TimeSpan LockTimeout { get; } = new TimeSpan(0, 0, 0, 0, MonitorTimeout);
         
         /*
         /// <summary>
@@ -39,7 +42,7 @@ namespace HComm
             get
             {
                 // lock message queue
-                if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100)))
+                if (!Monitor.TryEnter(_syncObject, LockTimeout))
                     return 0;
                 try
                 {
@@ -48,7 +51,7 @@ namespace HComm
                 finally
                 {
                     // unlock
-                    Monitor.Exit(MsgQueue);
+                    Monitor.Exit(_syncObject);
                 }
             }
         }
@@ -172,6 +175,8 @@ namespace HComm
         /// <returns>result</returns>
         public bool Close()
         {
+            // stop process timer
+            MsgTimer.Change(Timeout.Infinite, Timeout.Infinite);
             // set state
             State = ConnectionState.Disconnecting;
             // set connection time
@@ -187,11 +192,15 @@ namespace HComm
         /// </summary>
         /// <param name="addr">address</param>
         /// <param name="count">count</param>
+        /// <param name="merge">merge state</param>
         /// <returns>result</returns>
         public bool GetParam(ushort addr, ushort count, bool merge = false)
         {
+            // check comm
+            if (Comm == null)
+                return false;
             // lock message queue
-            if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100))) 
+            if (!Monitor.TryEnter(_syncObject, LockTimeout)) 
                 return false;
             try
             {
@@ -232,7 +241,7 @@ namespace HComm
             finally
             {
                 // unlock
-                Monitor.Exit(MsgQueue);
+                Monitor.Exit(_syncObject);
             }
         }
         /// <summary>
@@ -243,8 +252,11 @@ namespace HComm
         /// <returns>result</returns>
         public bool SetParam(ushort addr, ushort value)
         {
+            // check comm
+            if (Comm == null)
+                return false;
             // lock message queue
-            if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100))) 
+            if (!Monitor.TryEnter(_syncObject, LockTimeout)) 
                 return false;
             try
             {
@@ -253,7 +265,7 @@ namespace HComm
                     return false;
                 // check queue count
                 if (MsgQueue.Count > 1)
-                    // inser queue
+                    // insert queue
                     MsgQueue.Insert(1, new HCommMsg(addr, Comm.PacketSetParam(addr, value)));
                 else
                     // add queue
@@ -264,7 +276,7 @@ namespace HComm
             finally
             {
                 // unlock
-                Monitor.Exit(MsgQueue);
+                Monitor.Exit(_syncObject);
             }
         }
         /// <summary>
@@ -273,8 +285,11 @@ namespace HComm
         /// <returns>result</returns>
         public bool GetInfo()
         {
+            // check comm
+            if (Comm == null)
+                return false;
             // lock message queue
-            if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100)))
+            if (!Monitor.TryEnter(_syncObject, LockTimeout))
                 return false;
             try
             {
@@ -289,7 +304,7 @@ namespace HComm
             finally
             {
                 // unlock
-                Monitor.Exit(MsgQueue);
+                Monitor.Exit(_syncObject);
             }
         }
         /// <summary>
@@ -300,8 +315,11 @@ namespace HComm
         /// <returns>result</returns>
         public bool SetRealTime(ushort addr = 4002, ushort state = 1)
         {
+            // check comm
+            if (Comm == null)
+                return false;
             // lock message queue
-            if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100)))
+            if (!Monitor.TryEnter(_syncObject, LockTimeout))
                 return false;
             try
             {
@@ -319,7 +337,7 @@ namespace HComm
             finally
             {
                 // unlock
-                Monitor.Exit(MsgQueue);
+                Monitor.Exit(_syncObject);
             }
         }
         /// <summary>
@@ -330,8 +348,11 @@ namespace HComm
         /// <returns>result</returns>
         public bool SetGraph(ushort addr = 4100, ushort state = 1)
         {
+            // check comm
+            if (Comm == null)
+                return false;
             // lock message queue
-            if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100))) 
+            if (!Monitor.TryEnter(_syncObject, LockTimeout)) 
                 return false;
             try
             {
@@ -349,7 +370,7 @@ namespace HComm
             finally
             {
                 // unlock
-                Monitor.Exit(MsgQueue);
+                Monitor.Exit(_syncObject);
             }
         }
         /// <summary>
@@ -360,8 +381,11 @@ namespace HComm
         /// <returns>result</returns>
         public bool GetState(ushort addr = 3300, ushort count = 14)
         {
+            // check comm
+            if (Comm == null)
+                return false;
             // lock message queue
-            if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100))) 
+            if (!Monitor.TryEnter(_syncObject, LockTimeout)) 
                 return false;
             try
             {
@@ -384,7 +408,7 @@ namespace HComm
             finally
             {
                 // unlock
-                Monitor.Exit(MsgQueue);
+                Monitor.Exit(_syncObject);
             }
         }
         /// <summary>
@@ -395,8 +419,11 @@ namespace HComm
         /// <returns>result</returns>
         public bool GetGraph(ushort addr = 4200, ushort count = 1)
         {
+            // check comm
+            if (Comm == null)
+                return false;
             // lock message queue
-            if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100))) 
+            if (!Monitor.TryEnter(_syncObject, LockTimeout)) 
                 return false;
             try
             {
@@ -414,36 +441,41 @@ namespace HComm
             finally
             {
                 // unlock
-                Monitor.Exit(MsgQueue);
+                Monitor.Exit(_syncObject);
             }
         }
 
         private void ProcessTimer(object state)
         {
-            // check connection state
-            if (AutoRequestInfo && (DateTime.Now - ConnectionTime).TotalSeconds > 3)
-            {
-                // stop process timer
-                MsgTimer.Change(Timeout.Infinite, Timeout.Infinite);
-                // disconnect
-                Comm.Close();
-                // reset event
-                Comm.AckReceived = null;
-                Comm.AckRawReceived = null;
-                // clear communicator
-                Comm = null;
-                // change state
-                State = ConnectionState.Disconnected;
-                // update event
-                ChangedConnection?.Invoke(false);
-                // exit
+            // check comm
+            if (Comm == null) 
                 return;
-            }
             // lock message queue
-            if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100)))
+            if (!Monitor.TryEnter(_syncObject, LockTimeout))
                 return;
             try
             {
+                // check connection state
+                if (AutoRequestInfo && (DateTime.Now - ConnectionTime).TotalSeconds > 3)
+                {
+                    // stop process timer
+                    MsgTimer.Change(Timeout.Infinite, Timeout.Infinite);
+                    // change state
+                    State = ConnectionState.Disconnected;
+                    // update event
+                    ChangedConnection?.Invoke(false);
+                    // disconnect
+                    Comm.Close();
+                    // reset event
+                    Comm.AckReceived = null;
+                    Comm.AckRawReceived = null;
+                    // clear communicator
+                    Comm = null;
+                    // clear queue
+                    MsgQueue.Clear();
+                    // exit
+                    return;
+                }
                 // check message queue
                 if (MsgQueue.Count > 0)
                 {
@@ -476,27 +508,30 @@ namespace HComm
                         // remove message
                         MsgQueue.Remove(msg);
                         // error
-                        ReceivedMsg?.Invoke(Command.Error, 0, new int[] { 0x00 });
+                        ReceivedMsg?.Invoke(Command.Error, 0, new[] { 0x00 });
                     }
                 }
                 else if (AutoRequestInfo && (DateTime.Now - InfoTime).TotalSeconds > 1)
-                    // get information
-                    GetInfo();
+                    // add queue
+                    MsgQueue.Add(new HCommMsg(0, Comm.PacketGetInfo()));
             }
             finally
             {
                 // unlock msg queue
-                Monitor.Exit(MsgQueue);
+                Monitor.Exit(_syncObject);
             }
         }
         private void AckReceivedCallback(Command cmd, byte[] packet)
         {
             int[] values = null;
             var length = 0;
-            int count = 0;
+            var count = 0;
 
             // reset connection time
             ConnectionTime = DateTime.Now;
+
+            // debug
+            //Console.WriteLine($@"Command: {cmd}, Length: {packet.Length}");
 
             // check command
             switch (cmd)
@@ -641,7 +676,7 @@ namespace HComm
                     throw new ArgumentOutOfRangeException(nameof(cmd), cmd, null);
             }
             // lock message queue
-            if (!Monitor.TryEnter(MsgQueue, new TimeSpan(0, 0, 0, 0, 100)))
+            if (!Monitor.TryEnter(_syncObject, LockTimeout))
                 return;
             try
             {
@@ -654,7 +689,7 @@ namespace HComm
                     ? 0
                     : msg.Address;
                 // check information
-                if (cmd == Command.Info && (count == 12 || count == 13))
+                if (cmd == Command.Info)
                     // set info
                     Information.SetInfo(values);
                 // update message
@@ -672,7 +707,7 @@ namespace HComm
             finally
             {
                 // unlock
-                Monitor.Exit(MsgQueue);
+                Monitor.Exit(_syncObject);
             }
         }
         private void AckRawReceived(byte[] packet)
@@ -732,25 +767,34 @@ namespace HComm
             /// <summary>
             /// Driver id
             /// </summary>
-            public int DriverId => (Values[0] << 8) | Values[1];
+            public int DriverId => Values.Count > 2 ? (Values[0] << 8) | Values[1] : 0;
             /// <summary>
             /// Controller model number
             /// </summary>
-            public int Controller => (Values[2] << 8) | Values[3];
+            public int Controller => Values.Count > 4 ? (Values[2] << 8) | Values[3] : 0;
             /// <summary>
             /// Driver model number
             /// </summary>
-            public int Driver => (Values[4] << 8) | Values[5];
+            public int Driver => Values.Count > 6 ? (Values[4] << 8) | Values[5] : 0;
             /// <summary>
             /// Device version
             /// </summary>
-            public string Version => ((Values[6] << 8) | Values[7]).ToString("D4").Insert(3, ".").Insert(1, ".");
+            public string Version => Values.Count > 8
+                ? ((Values[6] << 8) | Values[7]).ToString("D4").Insert(3, ".").Insert(1, ".")
+                : @"0.00.0";
             /// <summary>
             /// Driver serial number
             /// </summary>
             public string Serial =>
-                string.Join("", Values.Skip(8).Take(Values.Count - 8).Reverse().Select(x => $@"{x:D2}").ToArray());
-                
+                Values.Count > 12
+                    ? string.Join("", Values.Skip(8).Take(5).Reverse().Select(x => $@"{x:D2}").ToArray())
+                    : @"0000000000";
+            /// <summary>
+            /// Driver used count
+            /// </summary>
+            public int UsedCount =>
+                Values.Count > 16 ? Values[13] << 24 | Values[14] << 16 | Values[15] << 8 | Values[16] : 0; 
+
             /// <summary>
             /// Set data information
             /// </summary>

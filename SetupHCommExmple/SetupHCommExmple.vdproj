@@ -28,13 +28,13 @@
         "Entry"
         {
         "MsmKey" = "8:_0785EB12EF89607436F35013D208888C"
-        "OwnerKey" = "8:_75EA968149E65F97CE9C04785DB65EDF"
+        "OwnerKey" = "8:_959E52C30D1348EA9D4A67D79DAC45F8"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_0785EB12EF89607436F35013D208888C"
-        "OwnerKey" = "8:_959E52C30D1348EA9D4A67D79DAC45F8"
+        "OwnerKey" = "8:_4AAA36A4DDBC83DA38DE7FD16744588A"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -207,6 +207,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_4AAA36A4DDBC83DA38DE7FD16744588A"
+        "OwnerKey" = "8:_959E52C30D1348EA9D4A67D79DAC45F8"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_4B82F763BA68A6914311CC22FD02F235"
         "OwnerKey" = "8:_959E52C30D1348EA9D4A67D79DAC45F8"
         "MsmSig" = "8:_UNDEFINED"
@@ -291,12 +297,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_75EA968149E65F97CE9C04785DB65EDF"
-        "OwnerKey" = "8:_959E52C30D1348EA9D4A67D79DAC45F8"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_77D00F2CBECC528677304EB19FC81C06"
         "OwnerKey" = "8:_959E52C30D1348EA9D4A67D79DAC45F8"
         "MsmSig" = "8:_UNDEFINED"
@@ -322,13 +322,13 @@
         "Entry"
         {
         "MsmKey" = "8:_844F59EC9E5F68EE8168AA70596263E0"
-        "OwnerKey" = "8:_75EA968149E65F97CE9C04785DB65EDF"
+        "OwnerKey" = "8:_959E52C30D1348EA9D4A67D79DAC45F8"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_844F59EC9E5F68EE8168AA70596263E0"
-        "OwnerKey" = "8:_959E52C30D1348EA9D4A67D79DAC45F8"
+        "OwnerKey" = "8:_4AAA36A4DDBC83DA38DE7FD16744588A"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -610,7 +610,7 @@
         "Entry"
         {
         "MsmKey" = "8:_CF087E5A55F100EAD3B4D54DAA2AF20A"
-        "OwnerKey" = "8:_75EA968149E65F97CE9C04785DB65EDF"
+        "OwnerKey" = "8:_4AAA36A4DDBC83DA38DE7FD16744588A"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -658,13 +658,13 @@
         "Entry"
         {
         "MsmKey" = "8:_E20F1545385BE485405C11BF0A400BEE"
-        "OwnerKey" = "8:_844F59EC9E5F68EE8168AA70596263E0"
+        "OwnerKey" = "8:_4AAA36A4DDBC83DA38DE7FD16744588A"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_E20F1545385BE485405C11BF0A400BEE"
-        "OwnerKey" = "8:_75EA968149E65F97CE9C04785DB65EDF"
+        "OwnerKey" = "8:_844F59EC9E5F68EE8168AA70596263E0"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -2411,6 +2411,37 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_4AAA36A4DDBC83DA38DE7FD16744588A"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:HComm, Version=1.2.8.0, Culture=neutral, processorArchitecture=MSIL"
+                "ScatterAssemblies"
+                {
+                    "_4AAA36A4DDBC83DA38DE7FD16744588A"
+                    {
+                    "Name" = "8:HComm.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:HComm.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_7A5581D3AF604E8298D87718A446DF26"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_4B82F763BA68A6914311CC22FD02F235"
             {
             "AssemblyRegister" = "3:1"
@@ -2811,37 +2842,6 @@
             "PackageAs" = "3:1"
             "Register" = "3:1"
             "Exclude" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_75EA968149E65F97CE9C04785DB65EDF"
-            {
-            "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:HComm, Version=1.1.8.0, Culture=neutral, processorArchitecture=MSIL"
-                "ScatterAssemblies"
-                {
-                    "_75EA968149E65F97CE9C04785DB65EDF"
-                    {
-                    "Name" = "8:HComm.dll"
-                    "Attributes" = "3:512"
-                    }
-                }
-            "SourcePath" = "8:HComm.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_7A5581D3AF604E8298D87718A446DF26"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
@@ -5083,7 +5083,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:HCommExample"
         "ProductCode" = "8:{DE5EC587-DE70-4CA9-B69A-69B50322866E}"
-        "PackageCode" = "8:{69B4B922-3A39-40F3-B927-00D457446C29}"
+        "PackageCode" = "8:{959207AC-9A8E-4C49-AD0F-D355640A381F}"
         "UpgradeCode" = "8:{79B76572-3248-40CC-BB67-6B706635CA5E}"
         "AspNetVersion" = "8:"
         "RestartWWWService" = "11:FALSE"
@@ -5203,6 +5203,20 @@
         }
         "Shortcut"
         {
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_28E042C45429441C8F8717DB66A8FB12"
+            {
+            "Name" = "8:HCommExample"
+            "Arguments" = "8:"
+            "Description" = "8:"
+            "ShowCmd" = "3:1"
+            "IconIndex" = "3:0"
+            "Transitive" = "11:FALSE"
+            "Target" = "8:_959E52C30D1348EA9D4A67D79DAC45F8"
+            "Folder" = "8:_E379F0B18A7B42DAA0C3D6CA9BB59169"
+            "WorkingFolder" = "8:_7A5581D3AF604E8298D87718A446DF26"
+            "Icon" = "8:"
+            "Feature" = "8:"
+            }
         }
         "UserInterface"
         {

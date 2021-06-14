@@ -62,7 +62,7 @@ namespace HComm.Device
             if (option < 1 || option > 65535)
                 return false;
             // check id
-            if (id < 1 || id > 0x0F)
+            if (id < 0 || id > 0x0F)
                 return false;
 
             try

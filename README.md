@@ -108,8 +108,12 @@ Hantas tool device communication library
 </code></pre>
 ## History
 
+v1.2.8
+ - 
+
 v1.2.7
  - Get Param method 'merge' argument added.
+ - lock timeout bug fixed.
 
 v1.2.6
  - Address 2900~ added (Air tool only)

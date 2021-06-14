@@ -3,6 +3,7 @@ using System.Linq;
 using System.IO.Ports;
 using System.Threading;
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using HComm.Common;
 
@@ -50,7 +51,7 @@ namespace HComm.Device
             if (!BaudRates.Contains(option))
                 return false;
             // check id
-            if (id < 1 || id > 0x0F)
+            if (id < 0 || id > 0x0F)
                 return false;
 
             try
@@ -258,7 +259,9 @@ namespace HComm.Device
         private void Port_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             // lock receive buffer
-            lock (ReceiveBuf)
+            if(!Monitor.TryEnter(ReceiveBuf, new TimeSpan(0,0,0,0, 100)))
+                return;
+            try
             {
                 // get data
                 var data = Port.Encoding.GetBytes(Port.ReadExisting());
@@ -267,11 +270,17 @@ namespace HComm.Device
                 // update raw event
                 AckRawReceived?.Invoke(data);
             }
+            finally
+            {
+                Monitor.Exit(ReceiveBuf);
+            }
         }
         private void ProcessTimerCallback(object state)
         {
             // lock receive buffer
-            lock (ReceiveBuf)
+            if(!Monitor.TryEnter(ReceiveBuf, new TimeSpan(0,0,0,0, 100)))
+                return;
+            try
             {
                 // check receive buffer count
                 if (ReceiveBuf.Count > 0)
@@ -281,7 +290,6 @@ namespace HComm.Device
                     // clear receive buffer
                     ReceiveBuf.Clear();
                 }
-                
                 // timeout
                 var timeout = DateTime.Now;
                 // check analyze buffer count
@@ -360,10 +368,13 @@ namespace HComm.Device
                         // process acknowledge
                         AckReceived?.Invoke(cmd, packet.Skip(2).Take(length - 4).ToArray());
                     }
-
                     // remove analyze buffer
                     AnalyzeBuf.RemoveRange(0, length);
                 }
+            }
+            finally
+            {
+                Monitor.Exit(ReceiveBuf);
             }
         }
     }

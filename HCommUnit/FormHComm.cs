@@ -59,19 +59,19 @@ namespace HCommUnit
             switch (cmd)
             {
                 case Command.Read:
-                    AddLog($@"{cmd} / {addr} / {values.Length}");
+                    //AddLog($@"{cmd} / {addr} / {values.Length}");
                     break;
                 case Command.Mor:
-                    AddLog($@"{cmd} / {addr} / {values.Length}");
+                    //AddLog($@"{cmd} / {addr} / {values.Length}");
                     break;
                 case Command.Write:
-                    AddLog($@"{cmd} / {addr} / {values[1]}");
+                    //AddLog($@"{cmd} / {addr} / {values[1]}");
                     break;
                 case Command.Info:
-                    AddLog($@"{cmd} / {addr} / {values.Length}");
+                    //AddLog($@"{cmd} / {addr} / {values.Length}");
                     break;
                 case Command.Graph:
-                    AddLog($@"{cmd} / {addr} / {values.Length}");
+                    //AddLog($@"{cmd} / {addr} / {values.Length}");
                     break;
                 case Command.GraphRes:
                     AddLog($@"{cmd} / {addr} / {values.Length}");

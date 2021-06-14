@@ -46,7 +46,7 @@ namespace HComm.Device
         public bool Connect(string target, int option, byte id = 2)
         {
             // check id
-            if (id < 1 || id > 0x0F)
+            if (id < 0 || id > 0x0F)
                 return false;
             
             try
