@@ -52,6 +52,8 @@ namespace HCommUnit
         }
         private void ReceivedMsg(Command cmd, int addr, int[] values)
         {
+            // debug
+            //Console.WriteLine($@"COMMAND: {cmd}, ADDRESS: {addr}, LENGTH: {values.Length}");
             // check raw data
             if (cbHexLog.Checked)
                 return;
@@ -65,13 +67,13 @@ namespace HCommUnit
                     //AddLog($@"{cmd} / {addr} / {values.Length}");
                     break;
                 case Command.Write:
-                    //AddLog($@"{cmd} / {addr} / {values[1]}");
+                    AddLog($@"{cmd} / {addr} / {values[1]}");
                     break;
                 case Command.Info:
                     //AddLog($@"{cmd} / {addr} / {values.Length}");
                     break;
                 case Command.Graph:
-                    //AddLog($@"{cmd} / {addr} / {values.Length}");
+                    AddLog($@"{cmd} / {addr} / {values.Length}");
                     break;
                 case Command.GraphRes:
                     AddLog($@"{cmd} / {addr} / {values.Length}");
@@ -258,7 +260,8 @@ namespace HCommUnit
                 // setup
                 _hComm.SetUp(type);
                 // set option
-                //_hComm.AutoRequestInfo = false;
+                // _hComm.AutoDisconnect = false;
+                // _hComm.AutoRequestInfo = false;
                 // connect
                 if (!_hComm.Connect(target, option, id))
                     return;
@@ -297,7 +300,7 @@ namespace HCommUnit
             if (sender == btGetStatus)
             {
                 // get status
-                //_hComm.GetState(3300, 13);
+                _hComm.GetState(3200, 30);
 
                 // check state
                 if(!StateMor)
@@ -397,6 +400,11 @@ namespace HCommUnit
             // clear log
             Log.Clear();
             tbLog.Text = string.Empty;
+        }
+        private void cbGetInfo_CheckedChanged(object sender, EventArgs e)
+        {
+            _hComm.AutoRequestInfo = cbGetInfo.Checked;
+            _hComm.AutoDisconnect = cbGetInfo.Checked;
         }
     }
 }

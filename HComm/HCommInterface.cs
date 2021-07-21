@@ -18,6 +18,8 @@ namespace HComm
         private DateTime ConnectionTime { get; set; }
         private DateTime InfoTime { get; set; }
         private TimeSpan LockTimeout { get; } = new TimeSpan(0, 0, 0, 0, MonitorTimeout);
+        private bool _autoRequestInfo = true;
+        private bool _autoDisconnect = true;
         
         /*
         /// <summary>
@@ -62,7 +64,31 @@ namespace HComm
         /// <summary>
         /// HComm communicator automatic request information command
         /// </summary>
-        public bool AutoRequestInfo { get; set; } = true;
+        public bool AutoRequestInfo
+        {
+            get => _autoRequestInfo;
+            set
+            {
+                // set auto request information
+                _autoRequestInfo = value;
+                // reset connect time
+                ConnectionTime = DateTime.Now;
+            }
+        }
+        /// <summary>
+        /// HComm communicator automatic disconnect
+        /// </summary>
+        public bool AutoDisconnect
+        {
+            get => _autoDisconnect;
+            set
+            {
+                // set auto request information
+                _autoDisconnect = value;
+                // reset connect time
+                ConnectionTime = DateTime.Now;
+            }
+        }
         /// <summary>
         /// Device information
         /// </summary>
@@ -456,7 +482,7 @@ namespace HComm
             try
             {
                 // check connection state
-                if (AutoRequestInfo && (DateTime.Now - ConnectionTime).TotalSeconds > 3)
+                if (AutoDisconnect && (DateTime.Now - ConnectionTime).TotalSeconds > 3)
                 {
                     // stop process timer
                     MsgTimer.Change(Timeout.Infinite, Timeout.Infinite);
@@ -525,7 +551,7 @@ namespace HComm
         {
             int[] values = null;
             var length = 0;
-            var count = 0;
+            int count;
 
             // reset connection time
             ConnectionTime = DateTime.Now;
@@ -785,10 +811,7 @@ namespace HComm
             /// <summary>
             /// Driver serial number
             /// </summary>
-            public string Serial =>
-                Values.Count > 12
-                    ? string.Join("", Values.Skip(8).Take(5).Reverse().Select(x => $@"{x:D2}").ToArray())
-                    : @"0000000000";
+            public string Serial => string.Join("", Values.Skip(8).Take(5).Reverse().Select(x => $@"{x:D2}").ToArray());
             /// <summary>
             /// Driver used count
             /// </summary>

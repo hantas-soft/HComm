@@ -101,6 +101,7 @@ namespace HCommThread
                 case Command.Info:
                     break;
                 case Command.Graph:
+                    Console.WriteLine($@"{cmd}: {addr} / {values.Length}");
                     break;
                 case Command.GraphRes:
                     break;

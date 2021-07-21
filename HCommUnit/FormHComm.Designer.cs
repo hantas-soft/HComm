@@ -42,7 +42,6 @@ namespace HCommUnit
             System.Windows.Forms.Label lbCh2;
             System.Windows.Forms.Label lbSampling;
             System.Windows.Forms.Label lbGOption;
-            System.Windows.Forms.Label lbLog;
             System.Windows.Forms.Label lbId;
             this.timer = new System.Windows.Forms.Timer(this.components);
             this.cbType = new System.Windows.Forms.ComboBox();
@@ -83,6 +82,7 @@ namespace HCommUnit
             this.btGetInfo = new System.Windows.Forms.Button();
             this.btGetStatus = new System.Windows.Forms.Button();
             this.btClear = new System.Windows.Forms.Button();
+            this.cbGetInfo = new System.Windows.Forms.CheckBox();
             lbType = new System.Windows.Forms.Label();
             lbPort = new System.Windows.Forms.Label();
             lbBaudrate = new System.Windows.Forms.Label();
@@ -95,7 +95,6 @@ namespace HCommUnit
             lbCh2 = new System.Windows.Forms.Label();
             lbSampling = new System.Windows.Forms.Label();
             lbGOption = new System.Windows.Forms.Label();
-            lbLog = new System.Windows.Forms.Label();
             lbId = new System.Windows.Forms.Label();
             this.gbSerial.SuspendLayout();
             this.gbEthernet.SuspendLayout();
@@ -219,15 +218,6 @@ namespace HCommUnit
             lbGOption.TabIndex = 13;
             lbGOption.Text = "Option";
             // 
-            // lbLog
-            // 
-            lbLog.AutoSize = true;
-            lbLog.Location = new System.Drawing.Point(542, 9);
-            lbLog.Name = "lbLog";
-            lbLog.Size = new System.Drawing.Size(26, 12);
-            lbLog.TabIndex = 11;
-            lbLog.Text = "Log";
-            // 
             // lbId
             // 
             lbId.AutoSize = true;
@@ -239,7 +229,7 @@ namespace HCommUnit
             // 
             // timer
             // 
-            this.timer.Interval = 1;
+            this.timer.Interval = 5000;
             this.timer.Tick += new System.EventHandler(this.timer_Tick);
             // 
             // cbType
@@ -713,18 +703,31 @@ namespace HCommUnit
             this.btClear.UseVisualStyleBackColor = true;
             this.btClear.Click += new System.EventHandler(this.btClear_Click);
             // 
+            // cbGetInfo
+            // 
+            this.cbGetInfo.AutoSize = true;
+            this.cbGetInfo.Checked = true;
+            this.cbGetInfo.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cbGetInfo.Location = new System.Drawing.Point(542, 8);
+            this.cbGetInfo.Name = "cbGetInfo";
+            this.cbGetInfo.Size = new System.Drawing.Size(94, 16);
+            this.cbGetInfo.TabIndex = 18;
+            this.cbGetInfo.Text = "Request info";
+            this.cbGetInfo.UseVisualStyleBackColor = true;
+            this.cbGetInfo.CheckedChanged += new System.EventHandler(this.cbGetInfo_CheckedChanged);
+            // 
             // FormHComm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(784, 386);
+            this.Controls.Add(this.cbGetInfo);
             this.Controls.Add(this.btClear);
             this.Controls.Add(this.gbStatus);
             this.Controls.Add(this.cbHexLog);
             this.Controls.Add(lbId);
             this.Controls.Add(this.nmID);
             this.Controls.Add(this.btRefresh);
-            this.Controls.Add(lbLog);
             this.Controls.Add(this.tbLog);
             this.Controls.Add(this.gbGraph);
             this.Controls.Add(this.gbRealTime);
@@ -802,6 +805,7 @@ namespace HCommUnit
         private System.Windows.Forms.Button btGetInfo;
         private System.Windows.Forms.Button btGetStatus;
         private System.Windows.Forms.Button btClear;
+        private System.Windows.Forms.CheckBox cbGetInfo;
     }
 }
 
