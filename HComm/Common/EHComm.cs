@@ -20,6 +20,7 @@
     /// </summary>
     public enum Command
     {
+        None = 0x00,
         Read = 0x03,
         Mor = 0x04,
         Write = 0x06,

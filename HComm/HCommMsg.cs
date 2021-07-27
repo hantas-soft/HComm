@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HComm.Common;
+using System;
 using System.Collections.Generic;
 
 namespace HComm
@@ -14,18 +15,25 @@ namespace HComm
         /// <param name="addr">Address</param>
         /// <param name="packet">Packet</param>
         /// <param name="retry">Retry count</param>
-        public HCommMsg(int addr, IEnumerable<byte> packet, int retry = 1)
+        public HCommMsg(Command cmd, int addr, int count, IEnumerable<byte> packet, int retry = 1)
         {
+            Command = cmd;
             Address = addr;
+            Count = count;
             Active = false;
             Time = DateTime.Now;
             Retry = retry;
             Packet = new List<byte>(packet);
         }
+        public Command Command { get; }
         /// <summary>
         /// HCommInterface message send address
         /// </summary>
         public int Address { get; }
+        /// <summary>
+        /// HCommInterface message send count
+        /// </summary>
+        public int Count { get; }
         /// <summary>
         /// HCommInterface message sending wait active status
         /// </summary>

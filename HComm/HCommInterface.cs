@@ -233,9 +233,18 @@ namespace HComm
                 // check max queue size
                 if (MsgQueue.Count >= MaxQueueSize)
                     return false;
-                // check duplicate message
-                if (MsgQueue.Find(x => x.Address == addr) != null)
-                    return false;
+                // get item
+                var item = MsgQueue.Find(x => x.Address == addr);
+                // check item
+                if(item != null)
+                {
+                    // get address and count
+                    var itemAddr = item.Address;
+                    var itemCount = item.Count;
+                    // check duplicate message
+                    if (itemAddr == addr && itemCount == count)
+                        return false;
+                }
                 var blockSize = MaxParamBlock;
                 // check usb type
                 if (Type == CommType.Usb)
@@ -255,12 +264,12 @@ namespace HComm
                         var start = (ushort) (addr + i * blockSize);
                         // check block num
                         MsgQueue.Add(i == limit - 1 && remain != 0 || limit == 1 && block == 0 && remain == 0
-                            ? new HCommMsg(start, Comm.PacketGetParam(start, remain))
-                            : new HCommMsg(start, Comm.PacketGetParam(start, (ushort) blockSize)));
+                            ? new HCommMsg(Command.Read, start, remain, Comm.PacketGetParam(start, remain))
+                            : new HCommMsg(Command.Read, start, blockSize, Comm.PacketGetParam(start, (ushort)blockSize)));
                     }
                 }
                 else
-                    MsgQueue.Add(new HCommMsg(addr, Comm.PacketGetParam(addr, count)));
+                    MsgQueue.Add(new HCommMsg(Command.Read, addr, count, Comm.PacketGetParam(addr, count)));
                 // result
                 return true;
             }
@@ -289,13 +298,15 @@ namespace HComm
                 // check max queue size
                 if (MsgQueue.Count >= MaxQueueSize)
                     return false;
-                // check queue count
-                if (MsgQueue.Count > 1)
-                    // insert queue
-                    MsgQueue.Insert(1, new HCommMsg(addr, Comm.PacketSetParam(addr, value)));
-                else
+                // find WRITE queue
+                var index = MsgQueue.FindIndex(x => x.Command == Command.Write);
+                // check index
+                if(index < 0 || index != MsgQueue.Count - 1)
                     // add queue
-                    MsgQueue.Add(new HCommMsg(addr, Comm.PacketSetParam(addr, value)));
+                    MsgQueue.Add(new HCommMsg(Command.Write, addr, 1, Comm.PacketSetParam(addr, value)));
+                else
+                    // insert queue
+                    MsgQueue.Insert(index + 1, new HCommMsg(Command.Write, addr, 1, Comm.PacketSetParam(addr, value)));
                 // result
                 return true;
             }
@@ -323,7 +334,7 @@ namespace HComm
                 if (MsgQueue.Count >= MaxQueueSize)
                     return false;
                 // add queue
-                MsgQueue.Add(new HCommMsg(0, Comm.PacketGetInfo()));
+                MsgQueue.Add(new HCommMsg(Command.Info, 0, 0, Comm.PacketGetInfo()));
                 // result
                 return true;
             }
@@ -356,7 +367,7 @@ namespace HComm
                 if (MsgQueue.Find(x => x.Address == addr) != null)
                     return false;
                 // add queue
-                MsgQueue.Add(new HCommMsg(addr, Comm.PacketSetParam(addr, state)));
+                MsgQueue.Add(new HCommMsg(Command.Write, addr, 1, Comm.PacketSetParam(addr, state)));
                 // result
                 return true;
             }
@@ -389,7 +400,7 @@ namespace HComm
                 if (MsgQueue.Find(x => x.Address == addr) != null)
                     return false;
                 // add queue
-                MsgQueue.Add(new HCommMsg(addr, Comm.PacketSetParam(addr, state)));
+                MsgQueue.Add(new HCommMsg(Command.Write, addr, 1, Comm.PacketSetParam(addr, state)));
                 // result
                 return true;
             }
@@ -424,10 +435,10 @@ namespace HComm
                 // check queue count
                 if (MsgQueue.Count > 1)
                     // inser queue
-                    MsgQueue.Insert(1, new HCommMsg(addr, Comm.PacketGetState(addr, count)));
+                    MsgQueue.Insert(1, new HCommMsg(Command.Mor, addr, count, Comm.PacketGetState(addr, count)));
                 else
                     // add queue
-                    MsgQueue.Add(new HCommMsg(addr, Comm.PacketGetState(addr, count)));
+                    MsgQueue.Add(new HCommMsg(Command.Mor, addr, count, Comm.PacketGetState(addr, count)));
                 // result
                 return true;
             }
@@ -460,7 +471,7 @@ namespace HComm
                 if (MsgQueue.Find(x => x.Address == addr) != null)
                     return false;
                 // add queue
-                MsgQueue.Add(new HCommMsg(addr, Comm.PacketGetGraph(addr, count)));
+                MsgQueue.Add(new HCommMsg(Command.GraphAd, addr, 1, Comm.PacketGetGraph(addr, count)));
                 // result
                 return true;
             }
@@ -538,8 +549,8 @@ namespace HComm
                     }
                 }
                 else if (AutoRequestInfo && (DateTime.Now - InfoTime).TotalSeconds > 1)
-                    // add queue
-                    MsgQueue.Add(new HCommMsg(0, Comm.PacketGetInfo()));
+                    // add queue request information
+                    GetInfo();
             }
             finally
             {
@@ -699,7 +710,7 @@ namespace HComm
                     }
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(cmd), cmd, null);
+                    return;
             }
             // lock message queue
             if (!Monitor.TryEnter(_syncObject, LockTimeout))

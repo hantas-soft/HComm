@@ -305,6 +305,7 @@ namespace HComm.Device
                     // check header length
                     if (AnalyzeBuf.Count < 3)
                         break;
+
                     // set command
                     var cmd = (Command) AnalyzeBuf[1];
                     var error = (byte) cmd & 0x80;
@@ -313,7 +314,6 @@ namespace HComm.Device
                         // check header length
                         if (AnalyzeBuf.Count >= 5)
                             cmd = (Command) error;
-
                     int length;
                     // check header length
                     if (AnalyzeBuf.Count < 4)
