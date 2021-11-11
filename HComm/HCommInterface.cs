@@ -20,7 +20,7 @@ namespace HComm
         private TimeSpan LockTimeout { get; } = new TimeSpan(0, 0, 0, 0, MonitorTimeout);
         private bool _autoRequestInfo = true;
         private bool _autoDisconnect = true;
-        
+         
         /*
         /// <summary>
         /// HComm communicator connected state
@@ -434,7 +434,7 @@ namespace HComm
                     return false;
                 // check queue count
                 if (MsgQueue.Count > 1)
-                    // inser queue
+                    // insert queue
                     MsgQueue.Insert(1, new HCommMsg(Command.Mor, addr, count, Comm.PacketGetState(addr, count)));
                 else
                     // add queue

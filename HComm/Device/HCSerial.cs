@@ -3,7 +3,6 @@ using System.Linq;
 using System.IO.Ports;
 using System.Threading;
 using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using HComm.Common;
 
@@ -51,7 +50,7 @@ namespace HComm.Device
             if (!BaudRates.Contains(option))
                 return false;
             // check id
-            if (id < 0 || id > 0x0F)
+            if (id > 0x0F)
                 return false;
 
             try
@@ -290,91 +289,94 @@ namespace HComm.Device
                     // clear receive buffer
                     ReceiveBuf.Clear();
                 }
-                // timeout
-                var timeout = DateTime.Now;
-                // check analyze buffer count
-                while (AnalyzeBuf.Count > 0)
-                {
-                    // get laps
-                    var laps = DateTime.Now - timeout;
-                    // check timeout
-                    if (laps.TotalMilliseconds > 500)
-                        // clear analyze buffer
-                        AnalyzeBuf.Clear();
-
-                    // check header length
-                    if (AnalyzeBuf.Count < 3)
-                        break;
-
-                    // set command
-                    var cmd = (Command) AnalyzeBuf[1];
-                    var error = (byte) cmd & 0x80;
-                    // check error
-                    if (error == 0x80 && cmd != Command.GraphAd)
-                        // check header length
-                        if (AnalyzeBuf.Count >= 5)
-                            cmd = (Command) error;
-                    int length;
-                    // check header length
-                    if (AnalyzeBuf.Count < 4)
-                        break;
-                    // check command
-                    switch (cmd)
-                    {
-                        case Command.Write:
-                            // set length
-                            length = 8;
-                            break;
-                        case Command.Graph:
-                        case Command.GraphRes:
-                            // set length
-                            length = AnalyzeBuf[2] << 8 | AnalyzeBuf[3] + 6;
-                            break;
-                        case Command.GraphAd:
-                        case Command.Read:
-                        case Command.Mor:
-                        case Command.Info:
-                            // set length
-                            length = AnalyzeBuf[2] + 5;
-                            break;
-                        case Command.Error:
-                            // set length
-                            length = 5;
-                            break;
-                        default:
-                            // clear analyze buffer
-                            AnalyzeBuf.Clear();
-                            // exit
-                            return;
-                    }
-
-                    // check body length
-                    if (length > AnalyzeBuf.Count)
-                        break;
-                    // get packet
-                    var packet = AnalyzeBuf.Take(length).ToArray();
-                    // get crc
-                    var crc = GetCrc(packet.Take(length - 2).ToArray()).ToArray();
-                    // check crc
-                    if (crc[0] != packet[packet.Length - 2] || crc[1] != packet[packet.Length - 1])
-                        // error
-                        AckReceived?.Invoke(Command.Error, new byte[] {0xFF});
-                    else
-                    {
-                        // check state
-                        if (!IsConnected)
-                            // update event
-                            ConnectionChanged?.Invoke(IsConnected = true);
-                        // process acknowledge
-                        AckReceived?.Invoke(cmd, packet.Skip(2).Take(length - 4).ToArray());
-                    }
-                    // remove analyze buffer
-                    AnalyzeBuf.RemoveRange(0, length);
-                }
             }
             finally
             {
                 Monitor.Exit(ReceiveBuf);
+            }
+
+            // timeout
+            var timeout = DateTime.Now;
+            // check analyze buffer count
+            while (AnalyzeBuf.Count > 0)
+            {
+                // get laps
+                var laps = DateTime.Now - timeout;
+                // check timeout
+                if (laps.TotalMilliseconds > 500)
+                    // clear analyze buffer
+                    AnalyzeBuf.Clear();
+
+                // check header length
+                if (AnalyzeBuf.Count < 3)
+                    break;
+
+                // set command
+                var cmd = (Command)AnalyzeBuf[1];
+                var error = (byte)cmd & 0x80;
+                // check error
+                if (error == 0x80 && cmd != Command.GraphAd)
+                    // check header length
+                    if (AnalyzeBuf.Count >= 5)
+                        cmd = (Command)error;
+                int length;
+                // check header length
+                if (AnalyzeBuf.Count < 4)
+                    break;
+                // check command
+                switch (cmd)
+                {
+                    case Command.Write:
+                        // set length
+                        length = 8;
+                        break;
+                    case Command.Graph:
+                    case Command.GraphRes:
+                        // set length
+                        length = AnalyzeBuf[2] << 8 | AnalyzeBuf[3] + 6;
+                        break;
+                    case Command.GraphAd:
+                    case Command.Read:
+                    case Command.Mor:
+                    case Command.Info:
+                        // set length
+                        length = AnalyzeBuf[2] + 5;
+                        break;
+                    case Command.Error:
+                        // set length
+                        length = 5;
+                        break;
+                    default:
+                        // clear analyze buffer
+                        AnalyzeBuf.Clear();
+                        // exit
+                        return;
+                }
+
+                // check body length
+                if (length > AnalyzeBuf.Count)
+                    break;
+                // get packet
+                var packet = AnalyzeBuf.Take(length).ToArray();
+                // get crc
+                var crc = GetCrc(packet.Take(length - 2).ToArray()).ToArray();
+                // check crc
+                if (crc[0] != packet[packet.Length - 2] || crc[1] != packet[packet.Length - 1])
+                    // error
+                    AckReceived?.Invoke(Command.Error, new byte[] { 0xFF });
+                else
+                {
+                    // check state
+                    if (!IsConnected)
+                        // update event
+                        ConnectionChanged?.Invoke(IsConnected = true);
+                    // process acknowledge
+                    AckReceived?.Invoke(cmd, packet.Skip(2).Take(length - 4).ToArray());
+                }
+                // check analyze buf length
+                if (AnalyzeBuf.Count >= length)
+                    // remove analyze buffer
+                    AnalyzeBuf.RemoveRange(0, length);
             }
         }
     }
