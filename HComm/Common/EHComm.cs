@@ -1,22 +1,31 @@
 ﻿namespace HComm.Common
 {
     /// <summary>
-    /// Communicator type
+    ///     Communicator type
     /// </summary>
     public enum CommType
     {
-        None, Serial, Ethernet, Usb
+        None,
+        Serial,
+        Ethernet,
+        Usb
     }
+
     /// <summary>
-    /// Communicator connection types
+    ///     Communicator connection types
     /// </summary>
     public enum ConnectionState
     {
         // Connection state
-        None, Connecting, Connected, Disconnecting, Disconnected
+        None,
+        Connecting,
+        Connected,
+        Disconnecting,
+        Disconnected
     }
+
     /// <summary>
-    /// Communicator command
+    ///     Communicator command
     /// </summary>
     public enum Command
     {

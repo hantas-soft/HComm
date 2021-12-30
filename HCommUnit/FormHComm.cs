@@ -6,25 +6,17 @@ using HComm;
 using HComm.Common;
 using HComm.Device;
 
-namespace HCommUnit
+namespace HCommExample
 {
     public partial class FormHComm : Form
     {
+        private static HCommInterface _hComm;
+
         public FormHComm()
         {
             InitializeComponent();
         }
-        private static HCommInterface _hComm;
-        private const int Timeout = 1000;
-        private enum MonitorType
-        {
-            None,
-            RealTime,
-            RealTimeAd,
-            Graph,
-            GraphAd,
-            State
-        };
+
         private StringBuilder Log { get; } = new StringBuilder();
         private bool StateMor { get; set; }
         private bool StateGraph { get; set; }
@@ -41,7 +33,7 @@ namespace HCommUnit
             // add log
             Log.AppendLine($@"{log}");
             // print
-            tbLog.BeginInvoke(new Action(() =>
+            tbLog.BeginInvoke(new EventHandler(delegate
             {
                 // set text
                 tbLog.Text = Log.ToString();
@@ -50,6 +42,7 @@ namespace HCommUnit
                 tbLog.ScrollToCaret();
             }));
         }
+
         private void ReceivedMsg(Command cmd, int addr, int[] values)
         {
             // debug
@@ -61,16 +54,16 @@ namespace HCommUnit
             switch (cmd)
             {
                 case Command.Read:
-                    //AddLog($@"{cmd} / {addr} / {values.Length}");
+                    AddLog($@"{cmd} / {addr} / {values.Length}");
                     break;
                 case Command.Mor:
-                    //AddLog($@"{cmd} / {addr} / {values.Length}");
+                    AddLog($@"{cmd} / {addr} / {values.Length}");
                     break;
                 case Command.Write:
                     AddLog($@"{cmd} / {addr} / {values[1]}");
                     break;
                 case Command.Info:
-                    //AddLog($@"{cmd} / {addr} / {values.Length}");
+                    AddLog($@"{cmd} / {addr} / {values.Length}");
                     break;
                 case Command.Graph:
                     AddLog($@"{cmd} / {addr} / {values.Length}");
@@ -87,10 +80,13 @@ namespace HCommUnit
                 case Command.Error:
                     AddLog($@"{cmd} / {addr} / {values[0]}");
                     break;
+                case Command.None:
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(cmd), cmd, null);
             }
         }
+
         private void ReceivedRawMsg(byte[] packet)
         {
             // check raw data
@@ -101,6 +97,7 @@ namespace HCommUnit
             // add log
             AddLog(hex, true);
         }
+
         private void ChangedState(bool state)
         {
             // debug
@@ -108,14 +105,14 @@ namespace HCommUnit
             Invoke(new EventHandler(delegate
             {
                 // set button state
-                btConnect.Text = state ? $@"Disconnect" : $@"Connect";
-            }));            
+                btConnect.Text = state ? @"Disconnect" : @"Connect";
+            }));
         }
+
         private void timer_Tick(object sender, EventArgs e)
         {
             // check state
             if (StateMor)
-            {
                 // check type
                 switch (MorType)
                 {
@@ -132,17 +129,12 @@ namespace HCommUnit
                     case MonitorType.GraphAd:
                         break;
                     case MonitorType.State:
-                        // debug
-                        Invoke(new Action(() =>
-                                _hComm.GetState(3300, 21)
-                        ));
+                        _hComm.GetState(3300, 21);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
-            }
             else if (StateGraph)
-            {
                 // check type
                 switch (MorType)
                 {
@@ -158,12 +150,13 @@ namespace HCommUnit
                     case MonitorType.GraphAd:
                         _hComm.GetGraph();
                         break;
+                    case MonitorType.State:
+                        break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
-            }
         }
-        
+
         private void FormHComm_Load(object sender, EventArgs e)
         {
             // refresh item list
@@ -190,10 +183,12 @@ namespace HCommUnit
             cbType.SelectedIndex = 0;
 
             // check HComm interface
-            _hComm = new HCommInterface {ReceivedMsg = ReceivedMsg, ReceivedRawMsg = ReceivedRawMsg, ChangedConnection = ChangedState };
+            _hComm = new HCommInterface
+                { ReceivedMsg = ReceivedMsg, ReceivedRawMsg = ReceivedRawMsg, ChangedConnection = ChangedState };
             // start application
             AddLog(@"Start application");
         }
+
         private void btRefresh_Click(object sender, EventArgs e)
         {
             // clear
@@ -212,6 +207,7 @@ namespace HCommUnit
                 // add device
                 cbDevice.Items.Add(device);
         }
+
         private void btConnect_Click(object sender, EventArgs e)
         {
             // check connection state
@@ -252,6 +248,7 @@ namespace HCommUnit
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
+
                 // check target / option
                 if (string.IsNullOrWhiteSpace(target))
                     return;
@@ -262,9 +259,8 @@ namespace HCommUnit
                 // set option
                 // _hComm.AutoDisconnect = false;
                 // _hComm.AutoRequestInfo = false;
-                // connect
-                if (!_hComm.Connect(target, option, id))
-                    return;
+                // try connect
+                _hComm.Connect(target, option, id);
             }
             else
             {
@@ -272,6 +268,7 @@ namespace HCommUnit
                 _hComm.Close();
             }
         }
+
         private void btActionParam_Click(object sender, EventArgs e)
         {
             // check connection state
@@ -282,15 +279,13 @@ namespace HCommUnit
             var value = Convert.ToUInt16(nmValue.Value);
             // check sender
             if (sender == btGetParam)
-                // debug
-                Invoke(new Action(() =>
-                    // get param
-                    _hComm.GetParam(addr, value, true)
-                ));
+                // get param
+                _hComm.GetParam(addr, value, true);
             else if (sender == btSetParam)
                 // set param
                 _hComm.SetParam(addr, value);
         }
+
         private void btActionStatus_Click(object sender, EventArgs e)
         {
             // check connection state
@@ -303,7 +298,7 @@ namespace HCommUnit
                 _hComm.GetState(3200, 30);
 
                 // check state
-                if(!StateMor)
+                if (!StateMor)
                 {
                     // set monitor type
                     MorType = MonitorType.State;
@@ -324,8 +319,11 @@ namespace HCommUnit
             }
             else if (sender == btGetInfo)
                 // get information
+            {
                 _hComm.GetInfo();
+            }
         }
+
         private void btActionMor_Click(object sender, EventArgs e)
         {
             // check connection state
@@ -338,6 +336,10 @@ namespace HCommUnit
                 MorType = sender == btMorStart ? MonitorType.RealTime : MonitorType.RealTimeAd;
                 // set state
                 StateMor = true;
+                // check ad
+                if (sender == btMorStartAd)
+                    // change interval
+                    timer.Interval = 50;
                 // start timer
                 timer.Start();
             }
@@ -349,8 +351,11 @@ namespace HCommUnit
                 StateMor = !_hComm.SetRealTime(4002, 0);
                 // stop event real-time monitoring
                 timer.Stop();
+                // change interval
+                timer.Interval = 5000;
             }
         }
+
         private void btGraphSet_Click(object sender, EventArgs e)
         {
             // check connection state
@@ -360,16 +365,17 @@ namespace HCommUnit
             if (StateGraph)
                 return;
             // get graph setting
-            var ch1 = (ushort) cbCh1.SelectedIndex;
-            var ch2 = (ushort) cbCh2.SelectedIndex;
-            var sampling = (ushort) cbSampling.SelectedIndex;
-            var option = (ushort) cbOption.SelectedIndex;
+            var ch1 = (ushort)cbCh1.SelectedIndex;
+            var ch2 = (ushort)cbCh2.SelectedIndex;
+            var sampling = (ushort)cbSampling.SelectedIndex;
+            var option = (ushort)cbOption.SelectedIndex;
             // set graph setting
             _hComm.SetParam(4101, ch1);
             _hComm.SetParam(4102, ch2);
             _hComm.SetParam(4103, sampling);
             _hComm.SetParam(4104, option);
         }
+
         private void btActionGraph_Click(object sender, EventArgs e)
         {
             // check connection state
@@ -395,16 +401,28 @@ namespace HCommUnit
                 timer.Stop();
             }
         }
+
         private void btClear_Click(object sender, EventArgs e)
         {
             // clear log
             Log.Clear();
             tbLog.Text = string.Empty;
         }
+
         private void cbGetInfo_CheckedChanged(object sender, EventArgs e)
         {
             _hComm.AutoRequestInfo = cbGetInfo.Checked;
             _hComm.AutoDisconnect = cbGetInfo.Checked;
+        }
+
+        private enum MonitorType
+        {
+            None,
+            RealTime,
+            RealTimeAd,
+            Graph,
+            GraphAd,
+            State
         }
     }
 }

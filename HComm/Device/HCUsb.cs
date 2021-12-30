@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
-using UsbHid;
 using HComm.Common;
+using UsbHid;
 using UsbHid.USB.Classes;
 
 namespace HComm.Device
@@ -11,6 +11,7 @@ namespace HComm.Device
     public class HcUsb : IHComm
     {
         private const int ProcessTime = 10;
+        private const int TimeoutTime = 100;
         private const int Vid = 0x0483;
         private const int Pid = 0x5710;
         private UsbHidDevice UsbDevice { get; set; }
@@ -20,24 +21,27 @@ namespace HComm.Device
         private byte Id { get; set; }
 
         /// <summary>
-        /// HComm usb connection state
+        ///     HComm usb connection state
         /// </summary>
         public bool IsConnected { get; private set; }
-        /// <summary>
-        /// HComm usb received data event
-        /// </summary>
-        public AckData AckReceived { get; set; }
-        /// <summary>
-        /// HCommInterface usb raw acknowledge event
-        /// </summary>
-        public AckRawData AckRawReceived { get; set; }
-        /// <summary>
-        /// HCommInterface connection state changed
-        /// </summary>
-        public ChangedConnection ConnectionChanged { get; set; } 
 
         /// <summary>
-        /// HComm usb connect
+        ///     HComm usb received data event
+        /// </summary>
+        public AckData AckReceived { get; set; }
+
+        /// <summary>
+        ///     HCommInterface usb raw acknowledge event
+        /// </summary>
+        public AckRawData AckRawReceived { get; set; }
+
+        /// <summary>
+        ///     HCommInterface connection state changed
+        /// </summary>
+        public ChangedConnection ConnectionChanged { get; set; }
+
+        /// <summary>
+        ///     HComm usb connect
         /// </summary>
         /// <param name="target">not use: target</param>
         /// <param name="option">not use: option</param>
@@ -46,9 +50,9 @@ namespace HComm.Device
         public bool Connect(string target, int option, byte id = 2)
         {
             // check id
-            if (id < 0 || id > 0x0F)
+            if (id > 0x0F)
                 return false;
-            
+
             try
             {
                 // open
@@ -58,7 +62,7 @@ namespace HComm.Device
                     return false;
                 // get device
                 UsbDevice = new UsbHidDevice(devices[0].Key);
-                
+
                 // set id
                 Id = id;
                 // clear buffer
@@ -67,7 +71,7 @@ namespace HComm.Device
                 // set event
                 UsbDevice.DataReceived += UsbDevice_DataReceived;
                 // check timer
-                if(ProcessTimer == null)
+                if (ProcessTimer == null)
                     // new timer
                     ProcessTimer = new Timer(ProcessTimerCallback);
                 // start timer
@@ -84,8 +88,9 @@ namespace HComm.Device
 
             return false;
         }
+
         /// <summary>
-        /// HComm usb close
+        ///     HComm usb close
         /// </summary>
         /// <returns>result</returns>
         public bool Close()
@@ -102,15 +107,16 @@ namespace HComm.Device
             // clear
             UsbDevice = null;
             // clear state
-            if(IsConnected)
+            if (IsConnected)
                 // update event
                 ConnectionChanged?.Invoke(IsConnected = false);
-            
+
             // result
             return true;
         }
+
         /// <summary>
-        /// HComm usb packet write
+        ///     HComm usb packet write
         /// </summary>
         /// <param name="packet">packet</param>
         /// <param name="length">length</param>
@@ -120,23 +126,24 @@ namespace HComm.Device
             // check connection
             if (!UsbDevice.IsDeviceConnected)
                 return false;
- 
+
             try
             {
                 // write packet
                 var res = UsbDevice.SendMessage(packet);
-                
+
                 return res;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Console.WriteLine($@"{e.Message}");
             }
-            
+
             return false;
         }
+
         /// <summary>
-        /// HComm usb get parameter packet make
+        ///     HComm usb get parameter packet make
         /// </summary>
         /// <param name="addr">address</param>
         /// <param name="count">count</param>
@@ -145,19 +152,20 @@ namespace HComm.Device
         {
             var packet = new List<byte>
             {
-                Id, (byte) Command.Read,
-                (byte) ((addr >> 8) & 0xFF),
-                (byte) (addr & 0xFF),
-                (byte) ((count >> 8) & 0xFF),
-                (byte) (count & 0xFF),
+                Id, (byte)Command.Read,
+                (byte)((addr >> 8) & 0xFF),
+                (byte)(addr & 0xFF),
+                (byte)((count >> 8) & 0xFF),
+                (byte)(count & 0xFF)
             };
             // add dummy
             packet.AddRange(new byte[65 - packet.Count]);
             // packet
             return packet.ToArray();
         }
+
         /// <summary>
-        /// HComm usb set parameter packet make
+        ///     HComm usb set parameter packet make
         /// </summary>
         /// <param name="addr">address</param>
         /// <param name="value">value</param>
@@ -166,19 +174,20 @@ namespace HComm.Device
         {
             var packet = new List<byte>
             {
-                Id, (byte) Command.Write,
-                (byte) ((addr >> 8) & 0xFF),
-                (byte) (addr & 0xFF),
-                (byte) ((value >> 8) & 0xFF),
-                (byte) (value & 0xFF),
+                Id, (byte)Command.Write,
+                (byte)((addr >> 8) & 0xFF),
+                (byte)(addr & 0xFF),
+                (byte)((value >> 8) & 0xFF),
+                (byte)(value & 0xFF)
             };
             // add dummy
             packet.AddRange(new byte[65 - packet.Count]);
             // packet
             return packet.ToArray();
         }
+
         /// <summary>
-        /// HComm usb get state packet make
+        ///     HComm usb get state packet make
         /// </summary>
         /// <param name="addr">address</param>
         /// <param name="count">count</param>
@@ -187,34 +196,36 @@ namespace HComm.Device
         {
             var packet = new List<byte>
             {
-                Id, (byte) Command.Mor,
-                (byte) ((addr >> 8) & 0xFF),
-                (byte) (addr & 0xFF),
-                (byte) ((count >> 8) & 0xFF),
-                (byte) (count & 0xFF),
+                Id, (byte)Command.Mor,
+                (byte)((addr >> 8) & 0xFF),
+                (byte)(addr & 0xFF),
+                (byte)((count >> 8) & 0xFF),
+                (byte)(count & 0xFF)
             };
             // add dummy
             packet.AddRange(new byte[65 - packet.Count]);
             // packet
             return packet.ToArray();
         }
+
         /// <summary>
-        /// HComm usb get info packet make
+        ///     HComm usb get info packet make
         /// </summary>
         /// <returns>packet</returns>
         public IEnumerable<byte> PacketGetInfo()
         {
             var packet = new List<byte>
             {
-                Id, (byte) Command.Info,
+                Id, (byte)Command.Info
             };
             // add dummy
             packet.AddRange(new byte[65 - packet.Count]);
             // packet
             return packet.ToArray();
         }
+
         /// <summary>
-        /// HComm usb get graph packet make
+        ///     HComm usb get graph packet make
         /// </summary>
         /// <param name="addr">not use: address</param>
         /// <param name="count">not use: count</param>
@@ -223,15 +234,16 @@ namespace HComm.Device
         {
             var packet = new List<byte>
             {
-                Id, (byte) Command.GraphAd, 0x00
+                Id, (byte)Command.GraphAd, 0x00
             };
             // add dummy
             packet.AddRange(new byte[65 - packet.Count]);
             // packet
             return packet.ToArray();
         }
+
         /// <summary>
-        /// HComm usb get device list
+        ///     HComm usb get device list
         /// </summary>
         /// <returns>list</returns>
         public static List<string> GetDeviceNames()
@@ -245,18 +257,28 @@ namespace HComm.Device
         private void UsbDevice_DataReceived(byte[] data)
         {
             // lock receive buffer
-            lock (ReceiveBuf)
+            if (!Monitor.TryEnter(ReceiveBuf, TimeoutTime))
+                return;
+            try
             {
                 // add receive data
                 ReceiveBuf.AddRange(data);
                 // update raw event
                 AckRawReceived?.Invoke(data);
             }
+            finally
+            {
+                // unlock
+                Monitor.Exit(ReceiveBuf);
+            }
         }
+
         private void ProcessTimerCallback(object state)
         {
             // lock receive buffer
-            lock (ReceiveBuf)
+            if (!Monitor.TryEnter(ReceiveBuf, TimeoutTime))
+                return;
+            try
             {
                 // check receive buffer count
                 if (ReceiveBuf.Count > 0)
@@ -283,15 +305,13 @@ namespace HComm.Device
                     if (AnalyzeBuf.Count < UsbDevice.InputReportByteLength)
                         break;
                     // set command
-                    var cmd = (Command) AnalyzeBuf[1];
-                    var error = (byte) cmd & 0x80;
+                    var cmd = (Command)AnalyzeBuf[1];
+                    var error = (byte)cmd & 0x80;
                     // check error
                     if (error == 0x80 && cmd != Command.GraphAd)
                     {
                         // error
-                        AckReceived?.Invoke(
-                            Command.Error,
-                            AnalyzeBuf.Skip(2).Take(1).ToArray());
+                        AckReceived?.Invoke(Command.Error, AnalyzeBuf.Skip(2).Take(1).ToArray());
                         // remove analyze buffer
                         AnalyzeBuf.RemoveRange(0, UsbDevice.InputReportByteLength);
                         // break
@@ -317,6 +337,7 @@ namespace HComm.Device
                             break;
                         case Command.Error:
                             break;
+                        case Command.None:
                         default:
                             // clear analyze buffer
                             AnalyzeBuf.Clear();
@@ -338,6 +359,11 @@ namespace HComm.Device
                     // remove analyze buffer
                     AnalyzeBuf.RemoveRange(0, UsbDevice.InputReportByteLength);
                 }
+            }
+            finally
+            {
+                // unlock
+                Monitor.Exit(ReceiveBuf);
             }
         }
     }

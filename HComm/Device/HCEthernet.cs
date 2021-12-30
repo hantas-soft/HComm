@@ -1,41 +1,20 @@
 ﻿using System;
-using System.Net;
-using System.Linq;
-using System.Threading;
 using System.Collections.Generic;
-using SuperSocket.ClientEngine;
+using System.Linq;
+using System.Net;
+using System.Threading;
 using HComm.Common;
+using SuperSocket.ClientEngine;
 
 namespace HComm.Device
 {
     public class HcEthernet : IHComm
     {
         private const int ProcessTime = 10;
-        private AsyncTcpSession Session { get; } = new AsyncTcpSession();
-        private Timer ProcessTimer { get; set; }
-        private List<byte> ReceiveBuf { get; } = new List<byte>();
-        private List<byte> AnalyzeBuf { get; } = new List<byte>();
-        private ushort Transaction { get; set; }
-        private ushort Id { get; set; }
+        private const int TimeoutTime = 100;
 
         /// <summary>
-        /// HComm ethernet session connection state
-        /// </summary>
-        public bool IsConnected { get; private set; }
-        /// <summary>
-        /// HComm ethernet received data event
-        /// </summary>
-        public AckData AckReceived { get; set; }
-        /// <summary>
-        /// HCommInterface ethernet raw acknowledge event
-        /// </summary>
-        public AckRawData AckRawReceived { get; set; }
-        /// <summary>
-        /// HCommInterface connection state changed
-        /// </summary>
-        public ChangedConnection ConnectionChanged { get; set; } 
-        /// <summary>
-        /// HComm ethernet constructor
+        ///     HComm ethernet constructor
         /// </summary>
         public HcEthernet()
         {
@@ -45,8 +24,35 @@ namespace HComm.Device
             Session.Error += Session_Error;
         }
 
+        private AsyncTcpSession Session { get; } = new AsyncTcpSession();
+        private Timer ProcessTimer { get; set; }
+        private List<byte> ReceiveBuf { get; } = new List<byte>();
+        private List<byte> AnalyzeBuf { get; } = new List<byte>();
+        private ushort Transaction { get; set; }
+        private ushort Id { get; set; }
+
         /// <summary>
-        /// HComm session connect
+        ///     HComm ethernet session connection state
+        /// </summary>
+        public bool IsConnected { get; private set; }
+
+        /// <summary>
+        ///     HComm ethernet received data event
+        /// </summary>
+        public AckData AckReceived { get; set; }
+
+        /// <summary>
+        ///     HCommInterface ethernet raw acknowledge event
+        /// </summary>
+        public AckRawData AckRawReceived { get; set; }
+
+        /// <summary>
+        ///     HCommInterface connection state changed
+        /// </summary>
+        public ChangedConnection ConnectionChanged { get; set; }
+
+        /// <summary>
+        ///     HComm session connect
         /// </summary>
         /// <param name="target">ip address</param>
         /// <param name="option">port</param>
@@ -62,7 +68,7 @@ namespace HComm.Device
             if (option < 1 || option > 65535)
                 return false;
             // check id
-            if (id < 0 || id > 0x0F)
+            if (id > 0x0F)
                 return false;
 
             try
@@ -84,8 +90,9 @@ namespace HComm.Device
 
             return false;
         }
+
         /// <summary>
-        /// HComm session close
+        ///     HComm session close
         /// </summary>
         /// <returns>session close result</returns>
         public bool Close()
@@ -95,8 +102,9 @@ namespace HComm.Device
             // result
             return true;
         }
+
         /// <summary>
-        /// HComm session write
+        ///     HComm session write
         /// </summary>
         /// <param name="packet">packet</param>
         /// <param name="length">packet length</param>
@@ -119,8 +127,9 @@ namespace HComm.Device
                 return false;
             }
         }
+
         /// <summary>
-        /// HComm device get parameter packet make
+        ///     HComm device get parameter packet make
         /// </summary>
         /// <param name="addr">address</param>
         /// <param name="count">count</param>
@@ -133,26 +142,27 @@ namespace HComm.Device
             var packet = new List<byte>
             {
                 // transaction id
-                (byte) ((Transaction >> 8) & 0xFF), (byte) (Transaction & 0xFF),
+                (byte)((Transaction >> 8) & 0xFF), (byte)(Transaction & 0xFF),
                 // protocol id
-                0x00, (byte) Id,
+                0x00, (byte)Id,
                 // length
                 0x00, 0x06,
                 // unit id
                 0x00,
                 // command
-                (byte) Command.Read,
+                (byte)Command.Read,
                 // values
-                (byte) ((addr >> 8) & 0xFF),
-                (byte) (addr & 0xFF),
-                (byte) ((count >> 8) & 0xFF),
-                (byte) (count & 0xFF),
+                (byte)((addr >> 8) & 0xFF),
+                (byte)(addr & 0xFF),
+                (byte)((count >> 8) & 0xFF),
+                (byte)(count & 0xFF)
             };
             // packet
             return packet.ToArray();
         }
+
         /// <summary>
-        /// HComm device set parameter packet make
+        ///     HComm device set parameter packet make
         /// </summary>
         /// <param name="addr">address</param>
         /// <param name="value">value</param>
@@ -165,26 +175,27 @@ namespace HComm.Device
             var packet = new List<byte>
             {
                 // transaction id
-                (byte) ((Transaction >> 8) & 0xFF), (byte) (Transaction & 0xFF),
+                (byte)((Transaction >> 8) & 0xFF), (byte)(Transaction & 0xFF),
                 // protocol id
-                0x00, (byte) Id,
+                0x00, (byte)Id,
                 // length
                 0x00, 0x06,
                 // unit id
                 0x00,
                 // command
-                (byte) Command.Write,
+                (byte)Command.Write,
                 // values
-                (byte) ((addr >> 8) & 0xFF),
-                (byte) (addr & 0xFF),
-                (byte) ((value >> 8) & 0xFF),
-                (byte) (value & 0xFF),
+                (byte)((addr >> 8) & 0xFF),
+                (byte)(addr & 0xFF),
+                (byte)((value >> 8) & 0xFF),
+                (byte)(value & 0xFF)
             };
             // packet
             return packet.ToArray();
         }
+
         /// <summary>
-        /// HComm device get state packet make
+        ///     HComm device get state packet make
         /// </summary>
         /// <param name="addr">address</param>
         /// <param name="count">count</param>
@@ -197,26 +208,27 @@ namespace HComm.Device
             var packet = new List<byte>
             {
                 // transaction id
-                (byte) ((Transaction >> 8) & 0xFF), (byte) (Transaction & 0xFF),
+                (byte)((Transaction >> 8) & 0xFF), (byte)(Transaction & 0xFF),
                 // protocol id
-                0x00, (byte) Id,
+                0x00, (byte)Id,
                 // length
                 0x00, 0x06,
                 // unit id
                 0x00,
                 // command
-                (byte) Command.Mor,
+                (byte)Command.Mor,
                 // values
-                (byte) ((addr >> 8) & 0xFF),
-                (byte) (addr & 0xFF),
-                (byte) ((count >> 8) & 0xFF),
-                (byte) (count & 0xFF),
+                (byte)((addr >> 8) & 0xFF),
+                (byte)(addr & 0xFF),
+                (byte)((count >> 8) & 0xFF),
+                (byte)(count & 0xFF)
             };
             // packet
             return packet.ToArray();
         }
+
         /// <summary>
-        /// HComm device get information packet make
+        ///     HComm device get information packet make
         /// </summary>
         /// <returns>packet</returns>
         public IEnumerable<byte> PacketGetInfo()
@@ -227,21 +239,22 @@ namespace HComm.Device
             var packet = new List<byte>
             {
                 // transaction id
-                (byte) ((Transaction >> 8) & 0xFF), (byte) (Transaction & 0xFF),
+                (byte)((Transaction >> 8) & 0xFF), (byte)(Transaction & 0xFF),
                 // protocol id
-                0x00, (byte) Id,
+                0x00, (byte)Id,
                 // length
                 0x00, 0x02,
                 // unit id
                 0x00,
                 // command
-                (byte) Command.Info,
+                (byte)Command.Info
             };
             // packet
             return packet.ToArray();
         }
+
         /// <summary>
-        /// HComm device get graph monitoring data packet make
+        ///     HComm device get graph monitoring data packet make
         /// </summary>
         /// <param name="addr">not use: address</param>
         /// <param name="count">not use: count</param>
@@ -266,6 +279,7 @@ namespace HComm.Device
             // update event
             ConnectionChanged?.Invoke(IsConnected = true);
         }
+
         private void Session_Closed(object sender, EventArgs e)
         {
             // stop timer
@@ -278,15 +292,19 @@ namespace HComm.Device
             // update event
             ConnectionChanged?.Invoke(IsConnected = false);
         }
+
         private void Session_Error(object sender, ErrorEventArgs e)
         {
             // error
-            AckReceived?.Invoke(Command.Error, new byte[] {0xFF});
+            AckReceived?.Invoke(Command.Error, new byte[] { 0xFF });
         }
+
         private void SessionDataReceived(object sender, DataEventArgs e)
         {
             // lock receive buffer
-            lock (ReceiveBuf)
+            if (!Monitor.TryEnter(ReceiveBuf, TimeoutTime))
+                return;
+            try
             {
                 // get data
                 var data = e.Data.Take(e.Length).ToArray();
@@ -295,11 +313,19 @@ namespace HComm.Device
                 // update raw event
                 AckRawReceived?.Invoke(data);
             }
+            finally
+            {
+                // unlock
+                Monitor.Exit(ReceiveBuf);
+            }
         }
+
         private void ProcessTimerCallback(object state)
         {
             // lock receive buffer
-            lock (ReceiveBuf)
+            if (!Monitor.TryEnter(ReceiveBuf, TimeoutTime))
+                return;
+            try
             {
                 // check receive buffer count
                 if (ReceiveBuf.Count > 0)
@@ -326,10 +352,10 @@ namespace HComm.Device
                     if (AnalyzeBuf.Count < 8)
                         break;
                     // set frame length
-                    var frame = AnalyzeBuf[4] << 8 | AnalyzeBuf[5] + 6;
+                    var frame = (AnalyzeBuf[4] << 8) | (AnalyzeBuf[5] + 6);
                     var length = frame - 8;
                     // check frame length
-                    if(frame < 8)
+                    if (frame < 8)
                         // clear analyze buffer
                         AnalyzeBuf.Clear();
                     if (frame > AnalyzeBuf.Count)
@@ -338,9 +364,9 @@ namespace HComm.Device
                     // get packet
                     var packet = AnalyzeBuf.Take(frame).ToArray();
                     // set command
-                    var cmd = (Command) packet[7];
+                    var cmd = (Command)packet[7];
                     // check error
-                    if (((byte) cmd & 0xF0) == 0x80)
+                    if (((byte)cmd & 0xF0) == 0x80)
                     {
                         // error
                         AckReceived?.Invoke(
@@ -351,11 +377,17 @@ namespace HComm.Device
                         // break
                         break;
                     }
+
                     // process message
                     AckReceived?.Invoke(cmd, packet.Skip(8).Take(length).ToArray());
                     // remove analyze buffer
                     AnalyzeBuf.RemoveRange(0, frame);
                 }
+            }
+            finally
+            {
+                // unlock
+                Monitor.Exit(ReceiveBuf);
             }
         }
     }

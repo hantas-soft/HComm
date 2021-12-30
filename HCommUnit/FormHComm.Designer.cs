@@ -1,5 +1,5 @@
 ﻿
-namespace HCommUnit
+namespace HCommExample
 {
     partial class FormHComm
     {
@@ -368,7 +368,7 @@ namespace HCommUnit
             // 
             this.slVersion.Name = "slVersion";
             this.slVersion.Size = new System.Drawing.Size(47, 17);
-            this.slVersion.Text = "v1.00.0";
+            this.slVersion.Text = "v1.00.1";
             // 
             // gbGetSet
             // 

@@ -9,16 +9,17 @@ namespace HCommThread
 {
     public partial class FormThread : Form
     {
+        private static HCommInterface _hComm;
+
         public FormThread()
         {
             InitializeComponent();
         }
-        
-        private static HCommInterface _hComm;
+
         private void FormThread_Load(object sender, EventArgs e)
         {
             // check HComm interface
-            _hComm = new HCommInterface {ReceivedMsg = ReceivedMsg, ChangedConnection = ChangedState };
+            _hComm = new HCommInterface { ReceivedMsg = ReceivedMsg, ChangedConnection = ChangedState };
             // get serial port list
             var ports = HcSerial.GetPortNames();
             // check port list
@@ -26,6 +27,7 @@ namespace HCommThread
                 // add port
                 cbPorts.Properties.Items.Add(port);
         }
+
         private void btOpen_Click(object sender, EventArgs e)
         {
             // check connection state
@@ -51,10 +53,12 @@ namespace HCommThread
                 _hComm.Close();
             }
         }
+
         private void btStart_Click(object sender, EventArgs e)
         {
             workTimer.Enabled = !workTimer.Enabled;
         }
+
         private void btWrite_Click(object sender, EventArgs e)
         {
             // check connected
@@ -64,27 +68,29 @@ namespace HCommThread
             for (var i = 0; i < tbThread.Value; i++)
             {
                 var i1 = i;
-                new Thread(delegate ()
+                new Thread(delegate()
                 {
                     while (true)
                     {
                         // write
                         if (!_hComm.SetParam(292, 127))
-                            Console.WriteLine($@"Write failed");
+                            Console.WriteLine(@"Write failed");
                         // sleep
                         Thread.Sleep(500 + i1 * 25);
                     }
                 }).Start();
             }
         }
+
         private void ChangedState(bool state)
         {
             Invoke(new EventHandler(delegate
             {
                 // set button state
-                btOpen.Text = state ? $@"Close" : $@"Open";
-            }));   
+                btOpen.Text = state ? @"Close" : @"Open";
+            }));
         }
+
         private static void ReceivedMsg(Command cmd, int addr, int[] values)
         {
             switch (cmd)
@@ -113,6 +119,7 @@ namespace HCommThread
                     throw new ArgumentOutOfRangeException(nameof(cmd), cmd, null);
             }
         }
+
         private void workTimer_Tick(object sender, EventArgs e)
         {
             // check connected
@@ -120,9 +127,9 @@ namespace HCommThread
                 return;
             var rand = new Random(DateTime.Now.Millisecond);
             // request parameter
-            if(!_hComm.GetParam((ushort)rand.Next(1, 500), 50))
+            if (!_hComm.GetParam((ushort)rand.Next(1, 500), 50))
                 // error
-                Console.WriteLine($@"Read failed");
+                Console.WriteLine(@"Read failed");
         }
     }
 }
