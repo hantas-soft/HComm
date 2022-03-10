@@ -24,6 +24,11 @@ namespace HComm
         public delegate void ReceivedData(Command cmd, int addr, int[] values);
 
         /// <summary>
+        ///     HComm monitor data received delegate
+        /// </summary>
+        public delegate void ReceivedMorData(MonitorCommand cmd, byte[] packet);
+
+        /// <summary>
         ///     HComm raw data received delegate
         /// </summary>
         /// <param name="packet">packet</param>
@@ -47,10 +52,7 @@ namespace HComm
         private Timer MsgTimer { get; }
         private List<HCommMsg> MsgQueue { get; } = new List<HCommMsg>();
         private DateTime ConnectionTime { get; set; }
-
         private DateTime InfoTime { get; set; }
-
-        //private TimeSpan LockTimeout { get; } = new TimeSpan(0, 0, 0, 0, MonitorTimeout);
 
         /*
         /// <summary>
@@ -68,7 +70,7 @@ namespace HComm
         /// <summary>
         ///     HComm communicator message queue size
         /// </summary>
-        public int MaxQueueSize { get; set; } = 30;
+        public int MaxQueueSize { get; set; } = 100;
 
         /// <summary>
         ///     HComm communicator waiting queue count
@@ -141,6 +143,11 @@ namespace HComm
         ///     HComm raw data received event
         /// </summary>
         public ReceivedRawData ReceivedRawMsg { get; set; }
+
+        /// <summary>
+        ///     HComm monitor data received event
+        /// </summary>
+        public ReceivedMorData ReceivedMorMsg { get; set; }
 
         /// <summary>
         ///     HComm connection state changed event
@@ -565,7 +572,7 @@ namespace HComm
                         // laps
                         var laps = DateTime.Now - msg.Time;
                         // check time
-                        if (laps.TotalMilliseconds < 500)
+                        if (laps.TotalMilliseconds < 1000)
                             return;
                         // reset timer
                         msg.Active = false;
@@ -607,10 +614,6 @@ namespace HComm
 
             // reset connection time
             ConnectionTime = DateTime.Now;
-
-            // debug
-            //Console.WriteLine($@"Command: {cmd}, Length: {packet.Length}");
-
             // check command
             switch (cmd)
             {
@@ -776,12 +779,10 @@ namespace HComm
                            cmd == Command.Mor && msg.Address < 3200 && msg.Address > 3237
                     ? 0
                     : msg.Address;
-                /*
                 // check information
                 if (cmd == Command.Info)
                     // set info
                     Information.SetInfo(values);
-                */
                 // update message
                 ReceivedMsg?.Invoke(cmd, addr, values);
                 // set info time
@@ -807,6 +808,26 @@ namespace HComm
             ReceivedRawMsg?.Invoke(packet);
         }
 
+        private void AckMorReceived(MonitorCommand cmd, byte[] packet)
+        {
+            // check command
+            switch (cmd)
+            {
+                case MonitorCommand.Backup:
+                    // acknowledge
+                    if (!Comm.Write(HcEthernet.MonitorAck, HcEthernet.MonitorAck.Length))
+                        return;
+                    break;
+                case MonitorCommand.Report:
+                    // acknowledge
+                    if (!Comm.Write(HcEthernet.MonitorGraphAck, HcEthernet.MonitorGraphAck.Length))
+                        return;
+                    break;
+            }
+            // update event
+            ReceivedMorMsg?.Invoke(cmd, packet);
+        }
+
         private void ConnectionChanged(bool state)
         {
             // check state
@@ -823,6 +844,7 @@ namespace HComm
                         // set event
                         Comm.AckReceived = AckReceivedCallback;
                         Comm.AckRawReceived = AckRawReceived;
+                        Comm.AckMorReceived = AckMorReceived;
                         // update event
                         ChangedConnection?.Invoke(true);
                     }
@@ -839,6 +861,7 @@ namespace HComm
                         // reset event
                         Comm.AckReceived = null;
                         Comm.AckRawReceived = null;
+                        Comm.AckMorReceived = null;
                         // clear communicator
                         Comm = null;
                         // change state
@@ -855,9 +878,12 @@ namespace HComm
             }
         }
 
+        /// <summary>
+        ///     Tool device information class
+        /// </summary>
         public class DeviceInfo
         {
-            public List<byte> Values { get; } = new List<byte>();
+            private List<byte> Values { get; } = new List<byte>();
 
             /// <summary>
             ///     Driver id

@@ -124,6 +124,10 @@ Hantas tool device communication library
 
 ## History
 
+v1.2.9
+
+- Event monitor (4015, 4025)
+
 v1.2.8
 
 - Change monitor timeout laps

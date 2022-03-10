@@ -35,6 +35,11 @@ namespace HComm.Device
         public AckRawData AckRawReceived { get; set; }
 
         /// <summary>
+        ///     HCommInterface serial monitor acknowledge event
+        /// </summary>
+        public AckMorData AckMorReceived { get; set; }
+
+        /// <summary>
         ///     HCommInterface connection state changed
         /// </summary>
         public ChangedConnection ConnectionChanged { get; set; }

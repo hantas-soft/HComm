@@ -39,4 +39,13 @@
         GraphAd = 0xC8,
         Error = 0x80
     }
+
+    /// <summary>
+    ///     Monitoring event command types
+    /// </summary>
+    public enum MonitorCommand
+    {
+        Backup = 0x04,
+        Report = 0x66
+    }
 }

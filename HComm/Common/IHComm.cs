@@ -12,8 +12,13 @@ namespace HComm.Common
     /// <summary>
     ///     HCommInterface raw acknowledge delegate
     /// </summary>
-    /// <param name="packet"></param>
+    /// <param name="packet">packet</param>
     public delegate void AckRawData(byte[] packet);
+
+    /// <summary>
+    ///     HCommInterface monitor acknowledge delegate
+    /// </summary>
+    public delegate void AckMorData(MonitorCommand cmd, byte[] packet);
 
     /// <summary>
     ///     HCommInterface changed connection state delegate
@@ -36,6 +41,11 @@ namespace HComm.Common
         ///     HCommInterface raw acknowledge event
         /// </summary>
         AckRawData AckRawReceived { set; }
+
+        /// <summary>
+        ///     HCommInterface monitor acknowledge event
+        /// </summary>
+        AckMorData AckMorReceived { set; }
 
         /// <summary>
         ///     HCommInterface connection state changed

@@ -14,6 +14,21 @@ namespace HComm.Device
         private const int TimeoutTime = 100;
 
         /// <summary>
+        ///     Monitoring acknowledge packet
+        /// </summary>
+        public static readonly byte[] MonitorAck =
+        {
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x06, 0x0F, 0xB0, 0x00, 0x01
+        };
+        /// <summary>
+        ///     Monitoring acknowledge graph packet
+        /// </summary>
+        public static readonly byte[] MonitorGraphAck =
+        {
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x06, 0x0F, 0xBA, 0x00, 0x01
+        };
+
+        /// <summary>
         ///     HComm ethernet constructor
         /// </summary>
         public HcEthernet()
@@ -22,12 +37,19 @@ namespace HComm.Device
             Session.Connected += Session_Connected;
             Session.Closed += Session_Closed;
             Session.Error += Session_Error;
+            MorSession.Connected += Session_Connected;
+            MorSession.Closed += Session_Closed;
+            MorSession.Error += Session_Error;
         }
 
         private AsyncTcpSession Session { get; } = new AsyncTcpSession();
+        private AsyncTcpSession MorSession { get; } = new AsyncTcpSession();
         private Timer ProcessTimer { get; set; }
+        private Timer MorTimer { get; set; }
         private List<byte> ReceiveBuf { get; } = new List<byte>();
         private List<byte> AnalyzeBuf { get; } = new List<byte>();
+        private List<byte> MorReceiveBuf { get; } = new List<byte>();
+        private List<byte> MorAnalyzeBuf { get; } = new List<byte>();
         private ushort Transaction { get; set; }
         private ushort Id { get; set; }
 
@@ -45,6 +67,11 @@ namespace HComm.Device
         ///     HCommInterface ethernet raw acknowledge event
         /// </summary>
         public AckRawData AckRawReceived { get; set; }
+
+        /// <summary>
+        ///     HCommInterface ethernet monitor event
+        /// </summary>
+        public AckMorData AckMorReceived { get; set; }
 
         /// <summary>
         ///     HCommInterface connection state changed
@@ -73,10 +100,9 @@ namespace HComm.Device
 
             try
             {
-                // get remote point
-                var client = new IPEndPoint(ip, option);
                 // try connect
-                Session.Connect(client);
+                Session.Connect(new IPEndPoint(ip, option));
+                MorSession.Connect(new IPEndPoint(ip, option + 1));
                 // set id
                 Id = id;
                 // result
@@ -99,6 +125,7 @@ namespace HComm.Device
         {
             // close
             Session.Close();
+            MorSession.Close();
             // result
             return true;
         }
@@ -266,29 +293,47 @@ namespace HComm.Device
 
         private void Session_Connected(object sender, EventArgs e)
         {
+            // check session
+            if (!Session.IsConnected || !MorSession.IsConnected)
+                return;
             // clear buffer
             ReceiveBuf.Clear();
             AnalyzeBuf.Clear();
-            // set event
+            MorReceiveBuf.Clear();
+            MorAnalyzeBuf.Clear();
+            // check event
+            Session.DataReceived -= SessionDataReceived;
             Session.DataReceived += SessionDataReceived;
+            MorSession.DataReceived -= MorSessionDataReceived;
+            MorSession.DataReceived += MorSessionDataReceived;
             // check timer
             if (ProcessTimer == null)
                 ProcessTimer = new Timer(ProcessTimerCallback);
+            if (MorTimer == null)
+                MorTimer = new Timer(MorTimerCallback);
             // start timer
             ProcessTimer.Change(ProcessTime, ProcessTime);
+            MorTimer.Change(ProcessTime, ProcessTime);
             // update event
             ConnectionChanged?.Invoke(IsConnected = true);
         }
 
         private void Session_Closed(object sender, EventArgs e)
         {
+            // check sessions state
+            if (Session.IsConnected || MorSession.IsConnected)
+                return;
             // stop timer
             ProcessTimer.Change(Timeout.Infinite, Timeout.Infinite);
+            MorTimer.Change(Timeout.Infinite, Timeout.Infinite);
             // reset event
             Session.DataReceived -= SessionDataReceived;
+            MorSession.DataReceived -= MorSessionDataReceived;
             // clear buffer
             ReceiveBuf.Clear();
             AnalyzeBuf.Clear();
+            MorReceiveBuf.Clear();
+            MorAnalyzeBuf.Clear();
             // update event
             ConnectionChanged?.Invoke(IsConnected = false);
         }
@@ -317,6 +362,25 @@ namespace HComm.Device
             {
                 // unlock
                 Monitor.Exit(ReceiveBuf);
+            }
+        }
+
+        private void MorSessionDataReceived(object sender, DataEventArgs e)
+        {
+            // lock receive buffer
+            if (!Monitor.TryEnter(MorReceiveBuf, TimeoutTime))
+                return;
+            try
+            {
+                // get data
+                var data = e.Data.Take(e.Length).ToArray();
+                // add receive data
+                MorReceiveBuf.AddRange(data);
+            }
+            finally
+            {
+                // unlock
+                Monitor.Exit(MorReceiveBuf);
             }
         }
 
@@ -352,7 +416,7 @@ namespace HComm.Device
                     if (AnalyzeBuf.Count < 8)
                         break;
                     // set frame length
-                    var frame = (AnalyzeBuf[4] << 8) | (AnalyzeBuf[5] + 6);
+                    var frame = ((AnalyzeBuf[4] << 8) | AnalyzeBuf[5]) + 6;
                     var length = frame - 8;
                     // check frame length
                     if (frame < 8)
@@ -369,9 +433,7 @@ namespace HComm.Device
                     if (((byte)cmd & 0xF0) == 0x80)
                     {
                         // error
-                        AckReceived?.Invoke(
-                            Command.Error,
-                            packet.Skip(frame - 1).Take(1).ToArray());
+                        AckReceived?.Invoke(Command.Error, packet.Skip(frame - 1).Take(1).ToArray());
                         // remove analyze buffer
                         AnalyzeBuf.RemoveRange(0, frame);
                         // break
@@ -388,6 +450,64 @@ namespace HComm.Device
             {
                 // unlock
                 Monitor.Exit(ReceiveBuf);
+            }
+        }
+
+        private void MorTimerCallback(object state)
+        {
+            // lock monitor receive buffer
+            if (!Monitor.TryEnter(MorReceiveBuf, TimeoutTime))
+                return;
+            try
+            {
+                // check receive buffer count
+                if (MorReceiveBuf.Count > 0)
+                {
+                    // add analyze buffer
+                    MorAnalyzeBuf.AddRange(MorReceiveBuf);
+                    // clear receive buffer
+                    MorReceiveBuf.Clear();
+                }
+
+                // timeout
+                var timeout = DateTime.Now;
+                // check analyze buffer count
+                while (MorAnalyzeBuf.Count > 0)
+                {
+                    // get laps
+                    var laps = DateTime.Now - timeout;
+                    // check timeout
+                    if (laps.TotalMilliseconds > 500)
+                        // clear analyze buffer
+                        MorAnalyzeBuf.Clear();
+
+                    // check header length
+                    if (MorAnalyzeBuf.Count < 8)
+                        break;
+                    // set frame length
+                    var frame = ((MorAnalyzeBuf[4] << 8) | MorAnalyzeBuf[5]) + 6;
+                    var length = frame - 8;
+                    // check frame length
+                    if (frame < 8)
+                        // clear analyze buffer
+                        MorAnalyzeBuf.Clear();
+                    // check frame length
+                    if (frame > MorAnalyzeBuf.Count)
+                        break;
+                    // get packet
+                    var packet = MorAnalyzeBuf.Take(frame).ToArray();
+                    // set command
+                    var cmd = (MonitorCommand)packet[7];
+                    // process message
+                    AckMorReceived?.Invoke(cmd, packet.Skip(8).Take(length).ToArray());
+                    // remove analyze buffer
+                    MorAnalyzeBuf.Clear();
+                }
+            }
+            finally
+            {
+                // unlock
+                Monitor.Exit(MorReceiveBuf);
             }
         }
     }

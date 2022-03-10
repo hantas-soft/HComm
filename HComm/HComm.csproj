@@ -5,7 +5,7 @@
         <Copyright>Copyright 2020. Hantas all right reserved.</Copyright>
         <Company>Hantas</Company>
         <Authors>Eloiz</Authors>
-        <Version>1.2.8.6</Version>
+        <Version>1.2.9.2</Version>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <Description>Hantas tool device communication library</Description>
         <PackageProjectUrl>https://github.com/hantas-soft/HComm.git</PackageProjectUrl>
@@ -14,8 +14,8 @@
         <PackageTags>C#, .Net Standard 2.0</PackageTags>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-        <AssemblyVersion>1.2.8.6</AssemblyVersion>
-        <FileVersion>1.2.8.6</FileVersion>
+        <AssemblyVersion>1.2.9.2</AssemblyVersion>
+        <FileVersion>1.2.9.2</FileVersion>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
@@ -35,9 +35,10 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="SuperSocket.ClientEngine.Core" Version="0.10.0" />
-        <PackageReference Include="System.IO.Ports" Version="4.7.0" />
-        <PackageReference Include="UsbHid" Version="1.2.1" />
+        <PackageReference Include="SuperSocket.ClientEngine" Version="0.10.0"/>
+        <PackageReference Include="SuperSocket.ProtoBase" Version="1.7.0.17"/>
+        <PackageReference Include="System.IO.Ports" Version="4.7.0"/>
+        <PackageReference Include="UsbHid" Version="1.2.1"/>
     </ItemGroup>
 
 </Project>
